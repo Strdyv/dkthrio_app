@@ -1,192 +1,158 @@
-const express = require("express");
-const path = require("path");
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Πίνακας προϊόντων με ΤΙΜΗ και ΑΠΟΘΕΜΑ
-let products = [
-  { id: 1, name: "Espesso", price: 0.70, stock: 0 },
-  { id: 2, name: "Cappuccino", price: 1.00, stock: 0 },
-  { id: 3, name: "Nescafe", price: 0.50, stock: 0 },
-  { id: 4, name: "Ελληνικός Μονός", price: 0.40, stock: 0 },
-  { id: 5, name: "Ελληνικός Διπλός", price: 0.60, stock: 0 },
-  { id: 6, name: "Κουλούρι", price: 0.50, stock: 0 },
-  { id: 7, name: "Σφολιατα", price: 1.50, stock: 0 },
-  { id: 8, name: "Σφολιατα", price: 1.40, stock: 0 },
-  { id: 9, name: "Σφολιατα", price: 1.30, stock: 0 },
-  { id: 10, name: "Σφολιατα", price: 1.20, stock: 0 },
-  { id: 11, name: "Σφολιατα", price: 1.00, stock: 0 },
-  { id: 12, name: "Σφολιατα", price: 7.99, stock: 0 },
-];
-
-// Αρχικοποίηση πίνακα πωλήσεων
-let sales = [];
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Σερβίρουμε τα στατικά αρχεία από το public
-app.use(express.static(path.join(__dirname, "public")));
-
-// ---------------------------------
-// ΡΟΥΤΕΣ ΓΙΑ ΤΟΝ ΧΡΗΣΤΗ
-// ---------------------------------
-app.get("/user", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "user.html"));
-});
-
-/** Επιστροφή λίστας προϊόντων - ο χρήστης βλέπει ΜΟΝΟ name & price (χωρίς stock) */
-app.get("/api/products", (req, res) => {
-  const dataToSend = products.map(p => ({
-    id: p.id,
-    name: p.name,
-    price: p.price,
-  }));
-  res.json(dataToSend);
-});
-
-/** Ο χρήστης κάνει πώληση - δέχεται το productId και την ποσότητα (quantity) που θέλει να πουλήσει */
-app.post("/api/sell", (req, res) => {
-  const { productId, quantity } = req.body;
-  const qty = quantity ? Number(quantity) : 1; // Default στο 1 αν δεν δοθεί ποσότητα
-  const product = products.find(p => p.id === Number(productId));
-
-  if (!product) {
-    return res.status(404).json({ message: "Το προϊόν δεν βρέθηκε" });
-  }
-
-  // Μείωση του stock κατά την καθορισμένη ποσότητα
-  product.stock -= qty;
-
-  // Καταχώρηση της πώλησης (περιλαμβάνεται το πεδίο quantity)
-  const sale = {
-    productId: product.id,
-    productName: product.name,
-    price: product.price,
-    quantity: qty,
-    timestamp: new Date().toISOString(),
-    canceled: false,
-    observation: "",            // Αρχικά κενό
-    observationTimestamp: ""    // Αρχικά κενό
-  };
-  sales.push(sale);
-
-  return res.json({ message: `Πωλήθηκαν ${qty} τεμάχια του ${product.name}`, sale });
-});
-
-/** Τελευταίες 3 πωλήσεις (μη ακυρωμένες) */
-app.get("/api/last-sales", (req, res) => {
-  const validSales = sales.filter(s => !s.canceled);
-  const last3 = validSales.slice(-3);
-  res.json(last3);
-});
-
-/** Ακύρωση πώλησης */
-app.post("/api/cancel", (req, res) => {
-  const { saleIndex } = req.body;
-
-  if (saleIndex < 0 || saleIndex >= sales.length) {
-    return res.status(404).json({ message: "Μη έγκυρη πώληση" });
-  }
-
-  const sale = sales[saleIndex];
-  if (sale.canceled) {
-    return res.status(400).json({ message: "Η πώληση είναι ήδη ακυρωμένη" });
-  }
-
-  sale.canceled = true;
-
-  // Επιστροφή στο απόθεμα: επαναφορά της ποσότητας
-  const product = products.find(p => p.id === sale.productId);
-  if (product) {
-    product.stock += sale.quantity;
-  }
-
-  return res.json({ message: "Η πώληση ακυρώθηκε", sale });
-});
-
-// ---------------------------------
-// ΡΟΥΤΕΣ ΓΙΑ ΤΟΝ ΔΙΑΧΕΙΡΙΣΤΗ
-// ---------------------------------
-app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "admin.html"));
-});
-
-/** 1. Όλες οι πωλήσεις */
-app.get("/api/admin/sales", (req, res) => {
-  res.json(sales);
-});
-
-/** 2. Επιστροφή αποθέματος για το admin */
-app.get("/api/admin/inventory", (req, res) => {
-  res.json(products);
-});
-
-/** 3. Προσθήκη αποθέματος (ή αφαίρεση) σε ένα προϊόν */
-app.post("/api/admin/add-stock", (req, res) => {
-  const { productId, quantityChange } = req.body;
-  const product = products.find(p => p.id === Number(productId));
-
-  if (!product) {
-    return res.status(404).json({ message: "Το προϊόν δεν βρέθηκε" });
-  }
-
-  product.stock += Number(quantityChange);
-  res.json({ message: `Ανανεώθηκε το απόθεμα του ${product.name} σε ${product.stock}`, product });
-});
-
-/** 4. Επιστροφή συνόλου πωλήσεων ανά προϊόν (για σήμερα) */
-app.get("/api/admin/daily-sales", (req, res) => {
-  const grouped = {};
-  for (const sale of sales) {
-    if (sale.canceled) continue;
-    const key = sale.productId;
-    if (!grouped[key]) {
-      grouped[key] = {
-        productId: sale.productId,
-        productName: sale.productName,
-        totalSold: 0,
-        totalIncome: 0,
-      };
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Σελίδα Πωλητή</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
-    grouped[key].totalSold += sale.quantity;
-    grouped[key].totalIncome += sale.quantity * sale.price;
-  }
-  res.json(Object.values(grouped));
-});
+    header {
+      background-color: #90EE90;
+      padding: 20px;
+      color: silver;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+    }
+    main {
+      flex: 1;
+    }
+    button {
+      margin: 5px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    footer {
+      background-color: black;
+      color: white;
+      padding: 10px;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+    .cancel-btn { background-color: red; color: white; }
+    .observe-btn { background-color: green; color: white; }
+    input[type="number"] {
+      width: 60px;
+      text-align: center;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ΜΕΡΑΡΧΙΑ ΥΠΟΣΤΗΡΙΞΗΣ ΒΑΣΗΣ</h1>
+    <h2>Σελίδα Πωλητή</h2>
+  </header>
 
-/** 5. Χειροκίνητος μηδενισμός */
-app.post("/api/admin/reset", (req, res) => {
-  sales = [];
-  products = [
-    { id: 1, name: "Espesso", price: 0.70, stock: 0 },
-    { id: 2, name: "Cappuccino", price: 1.00, stock: 0 },
-    { id: 3, name: "Nescafe", price: 0.50, stock: 0 },
-    { id: 4, name: "Ελληνικός Μονός", price: 0.40, stock: 0 },
-    { id: 5, name: "Ελληνικός Διπλός", price: 0.60, stock: 0 },
-    { id: 6, name: "Κουλούρι", price: 0.50, stock: 0 },
-    { id: 7, name: "Σφολιατα", price: 1.50, stock: 0 },
-    { id: 8, name: "Σφολιατα", price: 1.40, stock: 0 },
-    { id: 9, name: "Σφολιατα", price: 1.30, stock: 0 },
-    { id: 10, name: "Σφολιατα", price: 1.20, stock: 0 },
-    { id: 11, name: "Σφολιατα", price: 1.00, stock: 0 },
-    { id: 12, name: "Σφολιατα", price: 7.99, stock: 0 },
-  ];
-  res.json({ message: "Ο μηδενισμός ολοκληρώθηκε επιτυχώς!" });
-});
+  <main>
+    <div>
+      ΠΟΣΟΤΗΤΑ: <input type="number" id="quantity" value="1" min="1">
+    </div>
 
-/** 6. Ενημέρωση παρατηρήσεων για μια πώληση */
-app.post("/api/observation", (req, res) => {
-  const { saleIndex, observation } = req.body;
-  if (saleIndex < 0 || saleIndex >= sales.length) {
-    return res.status(404).json({ message: "Μη έγκυρη πώληση" });
-  }
-  const sale = sales[saleIndex];
-  sale.observation = observation;
-  sale.observationTimestamp = new Date().toISOString();
-  return res.json({ message: "Παρατηρήσεις αποθηκεύτηκαν", sale });
-});
+    <div id="products-container"></div>
+    <div id="message"></div>
 
-app.listen(PORT, () => {
-  console.log(`Server τρέχει στο http://localhost:${PORT}`);
-});
+    <h3>Τελευταίες 3 πωλήσεις</h2>
+    <div id="last-sales"></div>
+  </main>
+
+  <footer>
+    &copy; ΜΕΡΥΒ/ΓΕΠ 2025
+  </footer>
+
+  <script>
+    async function fetchProducts() {
+      const res = await fetch('/api/products');
+      const products = await res.json();
+      const container = document.getElementById('products-container');
+      container.innerHTML = '';
+      products.forEach(p => {
+        const btn = document.createElement('button');
+        btn.textContent = `${p.name} (${p.price}€)`;
+        btn.onclick = () => sellProduct(p.id);
+        container.appendChild(btn);
+      });
+    }
+
+    async function sellProduct(productId) {
+      const quantity = Number(document.getElementById('quantity').value);
+      const res = await fetch('/api/sell', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ productId, quantity })
+      });
+      const data = await res.json();
+      alert(data.message);
+      document.getElementById('quantity').value = 1;
+      fetchLastSales();
+    }
+
+    async function fetchLastSales() {
+      const res = await fetch('/api/last-sales');
+      const lastSales = await res.json();
+      const div = document.getElementById('last-sales');
+      div.innerHTML = '';
+
+      lastSales.forEach((sale, index) => {
+        const p = document.createElement('p');
+        p.innerHTML = `${sale.productName} - ${sale.price}€ x ${sale.quantity}`;
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Ακύρωση';
+        cancelBtn.classList.add('cancel-btn');
+        cancelBtn.onclick = () => cancelSale(indexInSales(sale));
+
+        const obsInput = document.createElement('input');
+        obsInput.placeholder = 'ΠΑΡΑΤΗΡΗΣΕΙΣ';
+
+        const obsBtn = document.createElement('button');
+        obsInput.type='text';
+        obsBtn.innerText = '✓';
+        obsBtn.classList.add('observe-btn');
+        obsBtn.onclick = () => addObservation(indexInSales(sale), obsInput.value);
+
+        div.appendChild(document.createTextNode(`${sale.productName} - ${sale.price}€ `));
+        div.appendChild(cancelBtn);
+        div.appendChild(obsInput);
+        div.appendChild(obsBtn);
+        div.appendChild(document.createElement('br'));
+      });
+      document.getElementById('quantity').value = 1;
+    }
+
+    async function indexInSales(saleObj){
+      const res = await fetch('/api/admin/sales');
+      const allSales = await res.json();
+      return allSales.findIndex(s => s.timestamp === saleObj.timestamp && s.productId === saleObj.productId);
+    }
+
+    async function cancelSale(saleIndex){
+      const res = await fetch('/api/cancel', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({saleIndex})
+      });
+      const data = await res.json();
+      alert(data.message);
+      fetchProducts();
+      fetchLastSales();
+    }
+
+    async function addObservation(saleIndex, observation){
+      const res = await fetch('/api/observation', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({saleIndex,observation})
+      });
+      const data = await res.json();
+      alert(data.message);
+    }
+
+    fetchProducts();
+    fetchLastSales();
+  </script>
+</body>
+</html>
