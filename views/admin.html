@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Σελίδα Διαχειριστή</title>
+</head>
+<body>
+  <h1>Σελίδα Διαχειριστή</h1>
+
+  <div>
+    <button onclick="fetchSales()">Αναλυτικές Πωλήσεις</button>
+    <button onclick="fetchInventory()">Δες Απόθεμα</button>
+    <button onclick="fetchDailySales()">Σύνολο Πωλήσεων (σήμερα)</button>
+    <button onclick="resetDay()">Χειροκίνητος Μηδενισμός</button>
+  </div>
+  
+  <hr>
+
+  <!-- Προσθήκη αποθέματος σε κάποιο προϊόν -->
+  <div>
+    <h3>Προσθήκη/Αφαίρεση Αποθέματος</h3>
+    <p>Δώσε το ID του προϊόντος και το ποσό που θες να προσθέσεις (ή να αφαιρέσεις).</p>
+    <input type="number" id="stockProductId" placeholder="productId">
+    <input type="number" id="stockChange" placeholder="π.χ. 5 ή -3">
+    <button onclick="updateStock()">Ενημέρωση Αποθέματος</button>
+  </div>
+
+  <hr>
+
+  <div id="sales-container"></div>
+  <hr>
+  <div id="inventory-container"></div>
+  <hr>
+  <div id="daily-sales-container"></div>
+
+  <script>
+    // 1. Αναλυτικές πωλήσεις
+    async function fetchSales() {
+      const res = await fetch("/api/admin/sales");
+      const data = await res.json();
+      const div = document.getElementById("sales-container");
+      div.innerHTML = "<h2>Αναλυτικές Πωλήσεις</h2>";
+
+      let totalCount = 0;
+      data.forEach((sale, index) => {
+        if (!sale.canceled) {
+          totalCount += sale.quantity;
+        }
+        div.innerHTML += `
+          <p>
+            <b>Index:</b> ${index} |
+            <b>Προϊόν:</b> ${sale.productName} |
+            <b>Τιμή:</b> ${sale.price}€ |
+            <b>Ποσότητα:</b> ${sale.quantity} |
+            <b>Ώρα:</b> ${sale.timestamp} |
+            <b>Ακυρωμένο:</b> ${sale.canceled}
+          </p>
+        `;
+      });
+      div.innerHTML += `<h4>Συνολική Ποσότητα Πωληθέντων: ${totalCount}</h4>`;
+    }
+
+    // 2. Προβολή αποθέματος
+    async function fetchInventory() {
+      const res = await fetch("/api/admin/inventory");
+      const data = await res.json();
+      const div = document.getElementById("inventory-container");
+      div.innerHTML = "<h2>Τρέχον Απόθεμα</h2>";
+
+      data.forEach(product => {
+        div.innerHTML += `<p>ID: ${product.id} - ${product.name}, Stock: ${product.stock}, Τιμή: ${product.price}€</p>`;
+      });
+    }
+
+    // 3. Ενημέρωση (προσθήκη/αφαίρεση) αποθέματος
+    async function updateStock() {
+      const productId = document.getElementById("stockProductId").value;
+      const quantityChange = document.getElementById("stockChange").value;
+      if (!productId || !quantityChange) {
+        alert("Συμπλήρωσε ID προϊόντος και ποσό αποθέματος (π.χ. 5 ή -3)");
+        return;
+      }
+
+      const res = await fetch("/api/admin/add-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: parseInt(productId), quantityChange: parseInt(quantityChange) })
+      });
+      const data = await res.json();
+      alert(data.message);
+      // Μετά την ενημέρωση, ανανέωσε την προβολή αποθέματος
+      fetchInventory();
+    }
+
+    // 4. Σύνολο πωλήσεων ανά προϊόν για σήμερα
+    async function fetchDailySales() {
+      const res = await fetch("/api/admin/daily-sales");
+      const data = await res.json();
+      const div = document.getElementById("daily-sales-container");
+      div.innerHTML = "<h2>Σύνολο Πωλήσεων (σήμερα)</h2>";
+
+      data.forEach(item => {
+        div.innerHTML += `
+          <p>
+            <b>${item.productName}</b> | 
+            Ποσότητα: ${item.totalSold} | 
+            Έσοδα: ${item.totalIncome.toFixed(2)}€
+          </p>
+        `;
+      });
+    }
+
+    // 5. Χειροκίνητος μηδενισμός (προαιρετικά)
+    async function resetDay() {
+      const res = await fetch("/api/admin/reset", {
+        method: "POST"
+      });
+      const data = await res.json();
+      alert(data.message);
+      fetchSales();
+      fetchInventory();
+      fetchDailySales();
+    }
+  </script>
+</body>
+</html>
