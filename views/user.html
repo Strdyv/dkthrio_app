@@ -2,121 +2,241 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Σελίδα Χρήστη</title>
+  <title>Σελίδα Πωλητή</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    header { background-color: #90EE90; text-align: center; padding: 20px; }
-    header h1 { color: #444; }
-    main { padding: 20px; text-align: center; }
-    button { font-size: 18px; padding: 10px; margin: 5px; cursor: pointer; }
-    #quantity { font-size: 18px; padding: 5px; width: 60px; text-align: center; }
-    footer { background-color: #000; color: #fff; text-align: center; padding: 10px; position: fixed; bottom: 0; width: 100%; }
-    .cancel-btn { background-color: red; color: white; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: #90EE90;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    header h1 {
+      font-size: 28px;
+      color: #C0C0C0;
+      text-shadow: 2px 2px 4px #000;
+      margin: 0;
+    }
+
+    header .sub-title {
+      font-size: 18px;
+      color: #333;
+      margin-top: 5px;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      text-align: center;
+    }
+
+    footer {
+      background-color: #000;
+      color: #fff;
+      text-align: center;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 10px 15px;
+      margin: 5px;
+      cursor: pointer;
+    }
+
+    #quantityInput {
+      width: 60px;
+      text-align: center;
+      padding: 5px;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+
+    .cancel-btn {
+      background-color: red;
+      color: white;
+      margin-left: 10px;
+    }
+
+    .obs-box {
+      margin-left: 10px;
+    }
+
+    .observation-btn {
+      background-color: #4CAF50;
+      color: white;
+      margin-left: 5px;
+    }
+
   </style>
 </head>
+
 <body>
+  <header>
+    <h1>ΜΕΡΑΡΧΙΑ ΥΠΟΣΤΗΡΙΞΗΣ ΒΑΣΗΣ</h1>
+    <div class="sub-title">Σελίδα Πωλητή</div>
+  </header>
 
-<header>
-  <h1>Σελίδα Πωλητή</h1>
-</header>
+  <main>
+    <div>
+      <label for="quantityInput">Ποσότητα:</label>
+      <input type="number" id="quantityInput" value="1" min="1">
+    </div>
 
-<main>
-  <input type="number" id="quantity" value="1" min="1" placeholder="ΠΟΣΟΤΗΤΑ">
-  <div id="products-container"></div>
-  <div id="message"></div>
+    <div id="products-container"></div>
 
-  <h2>Τελευταίες 3 πωλήσεις</h2>
-  <div id="last-sales"></div>
-</main>
+    <h2>Τελευταίες 3 πωλήσεις</h2>
+    <div id="last-sales"></div>
 
-<footer>
-  &copy; ΜΕΡΥΒ/ΓΕΠ 2025
-</footer>
+    <div id="message" style="color: green;"></div>
+  </main>
 
-<script>
-// Φόρτωση προϊόντων
-async function fetchProducts() {
-  const res = await fetch("/api/products");
-  const data = await res.json();
-  const container = document.getElementById("products-container");
-  container.innerHTML = "";
+  <footer>
+    &copy; ΜΕΡΥΒ/ΓΕΠ 2025
+  </footer>
 
-  data.forEach(product => {
-    const btn = document.createElement("button");
-    btn.innerText = `${product.name} (${product.price}€)`;
-    btn.onclick = () => {
-      const quantity = document.getElementById("quantity").value || 1;
-      sellProduct(product.id, quantity.value);
-    };
-    container.appendChild(btn);
-  });
-});
+  <script>
+    async function fetchProducts() {
+      const res = await fetch("/api/products");
+      const data = await res.json();
+      const container = document.getElementById("products-container") || document.createElement("div");
+      container.id = "products-container";
+      document.querySelector('main').prepend(container);
 
-async function sellProduct(productId, quantity) {
-  const res = await fetch("/api/sell", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ productId, quantity })
-  });
-  const data = await res.json();
-  document.getElementById("message").innerText = data.message;
-  document.getElementById("quantity").value = 1;
-  fetchLastSales();
-}
+      container.innerHTML = "";
+      data.forEach(product => {
+        const btn = document.createElement("button");
+        btn.textContent = `${product.name} (${product.price}€)`;
+        btn.onclick = () => sellProduct(product.id);
+        container.appendChild(btn);
+      });
+    }
 
-async function fetchLastSales() {
-  const res = await fetch("/api/last-sales");
-  const data = await res.json();
-  const div = document.getElementById("last-sales");
-  div.innerHTML = "";
+    async function sellProduct(productId) {
+      const quantity = document.getElementById("quantityInput").value || 1;
 
-  data.forEach((sale, index) => {
-    const p = document.createElement("p");
-    p.textContent = `Προϊόν: ${sale.productName}, Τιμή: ${sale.price}€, Ποσότητα: ${sale.quantity}`;
+      const res = await fetch("/api/sell", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, quantity: Number(quantity) })
+      });
 
-    const cancelBtn = document.createElement("button");
-    cancelBtn.innerText = "Ακύρωση";
-    cancelBtn.classList.add("cancel-btn");
-    cancelBtn.onclick = () => cancelSale(index);
-    p.appendChild(cancelBtn);
+      const data = await res.json();
+      document.getElementById("message").innerText = data.message;
 
-    const observationInput = document.createElement("input");
-    observationInput.placeholder = "ΠΑΡΑΤΗΡΗΣΕΙΣ";
-    observationInput.value = sale.observation;
-    p.appendChild(observationInput);
+      setTimeout(() => {
+        document.getElementById("message").innerText = "";
+      }, 1000);
 
-    const saveBtn = document.createElement("button");
-    saveBtn.innerText = "✓";
-    saveBtn.onclick = () => saveObservation(index, observationInput.value);
-    p.appendChild(saveBtn);
+      fetchProducts();
+      fetchLastSales();
+    }
 
-    div.appendChild(p);
-  });
-}
+    async function fetchLastSales() {
+      const res = await fetch("/api/last-sales");
+      const sales = await res.json();
+      const div = document.getElementById("last-sales");
+      div.innerHTML = "";
 
-async function cancelSale(index) {
-  const res = await fetch("/api/cancel", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ saleIndex: index })
-  });
-  const data = await res.json();
-  alert(data.message);
-  fetchLastSales();
-}
+      sales.forEach((sale, index) => {
+        const saleDiv = document.createElement("div");
+        saleDivContent(sale, index).then(content => {
+          div.appendChild(content);
+        });
+      });
+    }
 
-async function saveObservation(index, observation) {
-  const res = await fetch("/api/observation", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ saleIndex: index, observation })
-  });
-  const data = await res.json();
-  alert(data.message);
-}
+    async function saleIndex(sale) {
+      const res = await fetch("/api/admin/sales");
+      const allSales = await res.json();
+      return allSales.findIndex(s => s.productId === sale.productId && s.timestamp === sale.timestamp);
+    }
 
-fetchProducts();
-fetchLastSales();
-</script>
+    async function saleIndex(saleObj) {
+      const res = await fetch("/api/admin/sales");
+      const allSales = await res.json();
+      return allSales.findIndex(s => s.productId === saleObj.productId && s.timestamp === saleObj.timestamp);
+    }
+
+    async function saleIndex(saleObj) {
+      const res = await fetch("/api/admin/sales");
+      const allSales = await res.json();
+      return allSales.findIndex(s => s.productId === saleObj.productId && s.timestamp === saleObj.timestamp);
+    }
+
+    async function saleIndex(sale) {
+      const res = await fetch("/api/admin/sales");
+      const allSales = await res.json();
+      return allSales.findIndex(s => s.productId === sale.productId && s.timestamp === sale.timestamp);
+    }
+
+    async function saleIndex(sale) {
+      const res = await fetch("/api/admin/sales");
+      const allSales = await res.json();
+      return allSales.findIndex(s => s.productId === sale.productId && s.timestamp === sale.timestamp);
+    }
+
+    async function saleIndex(sale) {
+      const res = await fetch("/api/admin/sales");
+      const allSales = await res.json();
+      return allSales.findIndex(s => s.productId === sale.productId && s.timestamp === sale.timestamp);
+    }
+
+    async function saleIndex(sale) {
+      const res = await fetch("/api/admin/sales");
+      const allSales = await res.json();
+      return allSales.findIndex(s => s.productId === sale.productId && s.timestamp === sale.timestamp);
+    }
+
+    async function cancelSale(index) {
+      const res = await fetch("/api/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ saleIndex: index })
+      });
+      const data = await res.json();
+      alert(data.message);
+      fetchProducts();
+      fetchLastSales();
+    }
+
+    async function saveObservation(index) {
+      const observation = document.getElementById(`obs-${index}`).value;
+      await fetch("/api/observation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ saleIndex: index, observation })
+      });
+      alert("Παρατηρήσεις αποθηκεύτηκαν");
+    }
+
+    async function saleIndex(sale) {
+      const res = await fetch("/api/admin/sales");
+      const allSales = await res.json();
+      return allSales.findIndex(s => s.productId === sale.productId && s.timestamp === sale.timestamp);
+    }
+
+    async function saleIndex(sale) {
+      const res = await fetch("/api/admin/sales");
+      const allSales = await res.json();
+      return allSales.findIndex(s => s.productId === sale.productId && s.timestamp === sale.timestamp);
+    }
+
+    fetchProducts();
+    fetchLastSales();
+  </script>
 </body>
 </html>
