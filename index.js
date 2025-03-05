@@ -11,12 +11,12 @@ let products = [
   { id: 4, name: "Ελληνικός Μονός", price: 0.40, stock: 0 },
   { id: 5, name: "Ελληνικός Διπλός", price: 0.60, stock: 0 },
   { id: 6, name: "Κουλούρι", price: 0.50, stock: 0 },
-  { id: 7, name: "Σφολιατα", price: 1.50, stock: 0 },
-  { id: 8, name: "Σφολιατα", price: 1.40, stock: 0 },
-  { id: 9, name: "Σφολιατα", price: 1.30, stock: 0 },
-  { id: 10, name: "Σφολιατα", price: 1.20, stock: 0 },
-  { id: 11, name: "Σφολιατα", price: 1.00, stock: 0 },
-  { id: 12, name: "Σφολιατα", price: 7.99, stock: 0 },
+  { id: 7, name: "Πεϊνιρλι", price: 1.50, stock: 0 },
+  { id: 8, name: "Σπανακοπιτα", price: 1.40, stock: 0 },
+  { id: 9, name: "Πίτσα", price: 1.30, stock: 0 },
+  { id: 10, name: "Κρουασάν σοκολάτα", price: 1.20, stock: 0 },
+  { id: 11, name: "Τυρόπιτα", price: 1.00, stock: 0 },
+  { id: 12, name: "Νερό", price: 0.20, stock: 0 },
 ];
 
 let sales = [];
