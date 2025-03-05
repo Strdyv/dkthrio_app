@@ -26,7 +26,10 @@ let products = [
 ];
 
 // Πίνακας πωλήσεων
-let sales = [];
+let sales = [
+  observation: "",
+  observationTimestamp: ""
+];
 
 /**
  * Κάθε αίτημα ελέγχει αν άλλαξε η ημερομηνία, και αν ναι, κάνει reset.
@@ -213,4 +216,17 @@ app.post("/api/admin/reset", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server τρέχει στο http://localhost:${PORT}`);
+});
+
+// Ενημέρωση παρατηρήσεων για μια πώληση
+app.post("/api/observation", (req, res) => {
+  const { saleIndex, observation } = req.body;
+  if (saleIndex < 0 || saleIndex >= sales.length) {
+    return res.status(404).json({ message: "Μη έγκυρη πώληση" });
+  }
+  // Ενημέρωση της πώλησης με παρατηρήσεις και τρέχουσα ημερομηνία/ώρα
+  const sale = sales[saleIndex];
+  sale.observation = observation;
+  sale.observationTimestamp = new Date().toISOString();
+  return res.json({ message: "Παρατηρήσεις αποθηκεύτηκαν", sale });
 });
