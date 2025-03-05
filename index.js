@@ -3,12 +3,6 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/**
- * Για την αυτόματη εκκαθάριση κάθε μέρα, κρατάμε τη μέρα που έγινε τελευταία φορά reset.
- * Αν αλλάξει η ημερομηνία συστήματος, κάνουμε reset (μηδενισμό).
- */
-let lastResetDate = new Date().getDate();
-
 // Πίνακας προϊόντων με ΤΙΜΗ και ΑΠΟΘΕΜΑ
 let products = [
   { id: 1, name: "Espesso", price: 0.70, stock: 0 },
@@ -25,36 +19,8 @@ let products = [
   { id: 12, name: "Σφολιατα", price: 7.99, stock: 0 },
 ];
 
-// Διορθώνουμε την αρχικοποίηση του πίνακα πωλήσεων
+// Αρχικοποίηση πίνακα πωλήσεων
 let sales = [];
-
-/**
- * Κάθε αίτημα ελέγχει αν άλλαξε η ημερομηνία, και αν ναι, κάνει reset.
- */
-function checkDailyReset() {
-  const currentDay = new Date().getDate();
-  if (currentDay !== lastResetDate) {
-    // Μηδενίζουμε πωλήσεις
-    sales = [];
-    // Επαναφέρουμε την αρχική κατάσταση (ορίζοντας και τα προϊόντα με stock 0)
-    products = [
-      { id: 1, name: "Espesso", price: 0.70, stock: 0 },
-      { id: 2, name: "Cappuccino", price: 1.00, stock: 0 },
-      { id: 3, name: "Nescafe", price: 0.50, stock: 0 },
-      { id: 4, name: "Ελληνικός Μονός", price: 0.40, stock: 0 },
-      { id: 5, name: "Ελληνικός Διπλός", price: 0.60, stock: 0 },
-      { id: 6, name: "Κουλούρι", price: 0.50, stock: 0 },
-      { id: 7, name: "Σφολιατα", price: 1.50, stock: 0 },
-      { id: 8, name: "Σφολιατα", price: 1.40, stock: 0 },
-      { id: 9, name: "Σφολιατα", price: 1.30, stock: 0 },
-      { id: 10, name: "Σφολιατα", price: 1.20, stock: 0 },
-      { id: 11, name: "Σφολιατα", price: 1.00, stock: 0 },
-      { id: 12, name: "Σφολιατα", price: 7.99, stock: 0 },
-    ];
-    lastResetDate = currentDay;
-    console.log("Αυτόματος μηδενισμός ημέρας ολοκληρώθηκε!");
-  }
-}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -66,13 +32,11 @@ app.use(express.static(path.join(__dirname, "public")));
 // ΡΟΥΤΕΣ ΓΙΑ ΤΟΝ ΧΡΗΣΤΗ
 // ---------------------------------
 app.get("/user", (req, res) => {
-  checkDailyReset();
   res.sendFile(path.join(__dirname, "views", "user.html"));
 });
 
 /** Επιστροφή λίστας προϊόντων - ο χρήστης βλέπει ΜΟΝΟ name & price (χωρίς stock) */
 app.get("/api/products", (req, res) => {
-  checkDailyReset();
   const dataToSend = products.map(p => ({
     id: p.id,
     name: p.name,
@@ -83,7 +47,6 @@ app.get("/api/products", (req, res) => {
 
 /** Ο χρήστης κάνει πώληση - το απόθεμα μειώνεται (μπορεί να γίνει αρνητικό) */
 app.post("/api/sell", (req, res) => {
-  checkDailyReset();
   const { productId } = req.body;
   const product = products.find(p => p.id === Number(productId));
 
@@ -94,7 +57,7 @@ app.post("/api/sell", (req, res) => {
   // Μείωση του stock κατά 1
   product.stock -= 1;
 
-  // Καταχώρηση της πώλησης (προσθέτουμε επίσης πεδία για παρατηρήσεις)
+  // Καταχώρηση της πώλησης (προσθέτουμε πεδία για παρατηρήσεις)
   const sale = {
     productId: product.id,
     productName: product.name,
@@ -112,7 +75,6 @@ app.post("/api/sell", (req, res) => {
 
 /** Τελευταίες 3 πωλήσεις (μη ακυρωμένες) */
 app.get("/api/last-sales", (req, res) => {
-  checkDailyReset();
   const validSales = sales.filter(s => !s.canceled);
   const last3 = validSales.slice(-3);
   res.json(last3);
@@ -120,7 +82,6 @@ app.get("/api/last-sales", (req, res) => {
 
 /** Ακύρωση πώλησης */
 app.post("/api/cancel", (req, res) => {
-  checkDailyReset();
   const { saleIndex } = req.body;
 
   if (saleIndex < 0 || saleIndex >= sales.length) {
@@ -147,25 +108,21 @@ app.post("/api/cancel", (req, res) => {
 // ΡΟΥΤΕΣ ΓΙΑ ΤΟΝ ΔΙΑΧΕΙΡΙΣΤΗ
 // ---------------------------------
 app.get("/admin", (req, res) => {
-  checkDailyReset();
   res.sendFile(path.join(__dirname, "views", "admin.html"));
 });
 
 /** 1. Όλες οι πωλήσεις */
 app.get("/api/admin/sales", (req, res) => {
-  checkDailyReset();
   res.json(sales);
 });
 
 /** 2. Επιστροφή αποθέματος για το admin */
 app.get("/api/admin/inventory", (req, res) => {
-  checkDailyReset();
   res.json(products);
 });
 
 /** 3. Προσθήκη αποθέματος (ή αφαίρεση) σε ένα προϊόν */
 app.post("/api/admin/add-stock", (req, res) => {
-  checkDailyReset();
   const { productId, quantityChange } = req.body;
   const product = products.find(p => p.id === Number(productId));
 
@@ -179,7 +136,6 @@ app.post("/api/admin/add-stock", (req, res) => {
 
 /** 4. Επιστροφή συνόλου πωλήσεων ανά προϊόν (για σήμερα) */
 app.get("/api/admin/daily-sales", (req, res) => {
-  checkDailyReset();
   const grouped = {};
   for (const sale of sales) {
     if (sale.canceled) continue;
@@ -215,7 +171,6 @@ app.post("/api/admin/reset", (req, res) => {
     { id: 11, name: "Σφολιατα", price: 1.00, stock: 0 },
     { id: 12, name: "Σφολιατα", price: 7.99, stock: 0 },
   ];
-  lastResetDate = new Date().getDate();
   res.json({ message: "Ο μηδενισμός ολοκληρώθηκε επιτυχώς!" });
 });
 
