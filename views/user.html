@@ -44,8 +44,16 @@
       padding: 20px;
       text-align: center;
     }
-    /* Containers */
-    #products-container, #last-sales, #message {
+    /* Container για τα προϊόντα: χρήση CSS Grid, 3 στήλες */
+    #products-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* 3 στήλες */
+      gap: 20px; /* απόσταση ανάμεσα στα στοιχεία */
+      justify-items: center; /* κεντράρισμα των κουμπιών */
+      max-width: 1200px;
+      margin: 0 auto; /* κεντράρει όλο το grid */
+    }
+    #last-sales, #message {
       margin: 20px 0;
     }
     /* Buttons styling */
@@ -55,7 +63,7 @@
       margin: 5px;
       cursor: pointer;
     }
-    /* Footer styling: τώρα χωρίς fixed, γιατί το flex φροντίζει να είναι στο κάτω μέρος */
+    /* Footer styling: χωρίς fixed, γιατί το flex φροντίζει να είναι στο κάτω μέρος */
     footer {
       background-color: #000;
       color: #fff;
@@ -97,7 +105,7 @@
         btn.innerText = `${product.name} (Τιμή: ${product.price}€)`;
         btn.onclick = () => sellProduct(product.id);
         container.appendChild(btn);
-        container.appendChild(document.createElement("br"));
+        // Αφαιρούμε το document.createElement("br") για να μην πηγαίνουν σε νέα γραμμή
       });
     }
 
