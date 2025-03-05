@@ -1,39 +1,50 @@
 <!DOCTYPE html>
-<html lang="el">
+<html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <title>Σελίδα Χρήστη</title>
   <style>
-    body { font-family: Arial, sans-serif; }
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
     header {
       background-color: #90EE90;
       padding: 20px;
       text-align: center;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
-    button {
-      padding: 10px;
-      margin: 5px;
-      cursor: pointer;
+    main {
+      flex: 1;
+      padding: 20px;
+      text-align: center;
     }
     footer {
       background-color: #000;
       color: #fff;
-      text-align: center;
       padding: 10px;
+      text-align: center;
       position: fixed;
       bottom: 0;
       width: 100%;
     }
-    .cancel-btn { background-color: red; color: #fff; }
-    .obs-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
+    button {
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
     }
-    .obs-btn { background-color: green; color: white; }
+    .cancel-btn { background-color: red; color: white; }
+    .obs-btn {
+      background-color: green; color: white; padding: 5px; cursor: pointer;
+    }
+    .product-btn { margin: 10px; }
   </style>
+
 </head>
 <body>
 
@@ -42,16 +53,12 @@
   <h3>Σελίδα Πωλητή</h3>
 </header>
 
-<main style="text-align: center;">
-  <div>
-    <label>ΠΟΣΟΤΗΤΑ:</label>
-    <input type="number" id="quantity" value="1" min="1" style="width: 50px; text-align: center;">
-  </div>
-
+<main>
+  <input type="number" id="quantity" value="1" min="1" style="font-size:18px; padding:5px; width:80px; text-align:center;">
   <div id="products-container"></div>
+  <div id="message" style="color: green;"></div>
   <h2>Τελευταίες 3 πωλήσεις</h2>
   <div id="last-sales"></div>
-
 </main>
 
 <footer>
@@ -64,30 +71,31 @@ async function fetchProducts() {
   const data = await res.json();
   const container = document.getElementById("products-container");
   container.innerHTML = "";
-
-  data.forEach(p => {
+  data.forEach(product => {
     const btn = document.createElement("button");
-    btn.innerText = `${p.name} - ${p.price}€`;
-    btn.onclick = () => sellProduct(p.id);
+    btn.innerText = `${product.name} (Τιμή: ${product.price}€)`;
+    btn.className="product-btn";
+    btn.onclick = () => sellProduct(product.id);
     container.appendChild(btn);
   });
-}
+});
 
 async function sellProduct(productId) {
   const quantity = document.getElementById("quantity").value;
-
   const res = await fetch("/api/sell", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ productId, quantity })
   });
-
   const data = await res.json();
-  alert(data.message);
-
-  document.getElementById("quantity").value = 1;
-
-  fetchLastSales();
+  if (res.ok) {
+    document.getElementById("message").innerText = data.message;
+    setTimeout(() => document.getElementById("message").innerText = "", 1000);
+    fetchLastSales();
+    document.getElementById("quantity").value = 1;
+  } else {
+    alert(data.message);
+  }
 }
 
 async function fetchLastSales() {
@@ -96,61 +104,64 @@ async function fetchLastSales() {
   const div = document.getElementById("last-sales");
   div.innerHTML = "";
 
-  data.forEach((s, idx) => {
+  data.forEach(async (sale, index) => {
     const p = document.createElement("p");
-    p.textContent = `Προϊόν: ${s.productName}, Τιμή: ${s.price}€, Ποσότητα: ${s.quantity}`;
+    p.textContent = `Προϊόν: ${sale.productName}, Ποσότητα: ${sale.quantity}, Τιμή: ${sale.price}€`;
 
     const cancelBtn = document.createElement("button");
     cancelBtn.innerText = "Ακύρωση";
-    cancelBtn.style.backgroundColor = 'red';
-    cancelBtn.onclick = () => cancelSale(idx);
+    cancelBtn.className = "product-btn";
+    cancelBtn.style.backgroundColor = "red";
+    cancelBtn.onclick = async () => {
+      await fetch("/api/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ saleIndex: sales.indexOf(sale) })
+      });
+      fetchLastSales();
+    };
 
     const obsInput = document.createElement("input");
     obsInput.placeholder = "ΠΑΡΑΤΗΡΗΣΕΙΣ";
 
     const obsBtn = document.createElement("button");
+    obsInput.type = "text";
+    obsBtn = document.createElement("button");
     obsBtn.innerText = "✓";
-    obsBtn.className = 'obs-btn';
-    obsBtn.onclick = () => submitObservation(idx, obsInput.value);
+    obsBtn = document.createElement("button");
+    obsBtn.className = "obs-btn";
+    obsBtn.innerText = "✓";
+    obsBtn.onclick = () => {
+      fetch("/api/observation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ saleIndex: sales.indexOf(sale), observation: obsInput.value })
+      });
+    };
 
-    const obsDiv = document.createElement("div");
-    obsDiv.className = "obs-container";
-    obsDiv.appendChild(obsInput);
-    obsDiv.appendChild(obsBtn);
+    p.appendChild(cancelBtn);
+    p.appendChild(obsInput);
+    p.appendChild(obsBtn);
+    div.appendChild(p);
+  });
+}
 
-    const container = document.createElement("div");
-    container.className = "obs-btn";
-    container.appendChild(p);
-    container.appendChild(cancelBtn);
-    container.appendChild(obsDiv);
-
-    p.textContent = `Προϊόν: ${s.productName}, Τιμή: ${s.price}€, Ποσότητα: ${s.quantity}`;
-    div.appendChild(container);
+// Αρχική φόρτωση
+fetchLastSales();
+fetch("/api/products").then(res => res.json()).then(data => {
+  const container = document.getElementById("products-container");
+  data.forEach(p => {
+    const btn = document.createElement("button");
+    btn.innerText = `${p.name} (${p.price}€)`;
+    btn.className = "product-btn";
+    btn.onclick = () => sellProduct(p.id);
+    container.appendChild(btn);
   });
 });
 
-async function cancelSale(index) {
-  await fetch("/api/cancel", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ saleIndex: index })
-  });
-  fetchLastSales();
-}
-
-// Ενημέρωση παρατηρήσεων
-async function saveObservation(index, observation) {
-  await fetch("/api/observation", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ saleIndex: index, observation })
-  });
-}
-
-fetchProducts();
-fetchLastSales();
 </script>
 
 <footer>&copy; ΜΕΡΥΒ/ΓΕΠ 2025</footer>
+
 </body>
 </html>
