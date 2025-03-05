@@ -4,58 +4,84 @@
   <meta charset="utf-8">
   <title>Σελίδα Χρήστη</title>
   <style>
+    /* Γενικές ρυθμίσεις */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
     /* Header styling */
     header {
-      background-color: #90ee90; /* Ανοιχτό πράσινο */
+      background-color: #90EE90; /* Ανοιχτό πράσινο */
       padding: 20px;
       text-align: center;
-      font-size: 24px;
+      border-bottom: 2px solid #fff; /* Κενή γραμμή στο κάτω μέρος */
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    header .main-title {
+      font-size: 32px;
       font-weight: bold;
+      color: #C0C0C0; /* Ασημένιο μεταλλικό */
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      margin: 0;
+      padding: 0;
     }
-    /* Footer styling */
-    footer {
-      background-color: #000;
-      color: #fff;
-      padding: 10px;
+    header .sub-title {
+      font-size: 20px;
+      color: #555; /* Σκούρο μεταλλικό */
+      margin: 5px 0 0 0;
+      padding: 0;
+    }
+    /* Main content styling */
+    main {
+      padding: 20px;
+      margin-bottom: 80px; /* Χώρος για το footer */
+    }
+    /* Κεντράρισμα περιεχομένου */
+    #products-container, #last-sales, #message {
       text-align: center;
-      font-size: 16px;
+      margin: 20px 0;
     }
-    /* Μεγαλύτερα κουμπιά */
+    /* Buttons styling */
     button {
       font-size: 18px;
       padding: 10px 20px;
       margin: 5px;
       cursor: pointer;
     }
-    /* Επιπλέον στυλ για το κύριο περιεχόμενο */
-    #products-container {
-      margin: 20px;
+    /* Footer styling (ίδιο με τη σελίδα του διαχειριστή) */
+    footer {
+      background-color: #000;
+      color: #fff;
+      padding: 10px;
       text-align: center;
-    }
-    #last-sales {
-      margin: 20px;
-      text-align: center;
-    }
-    /* Μήνυμα */
-    #message {
-      text-align: center;
-      margin: 10px;
-      font-weight: bold;
+      font-size: 16px;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
     }
   </style>
 </head>
 <body>
   <!-- Header -->
   <header>
-    ΜΕΡΑΡΧΙΑ ΥΠΟΣΤΗΡΙΞΗΣ ΒΑΣΗΣ
+    <h1 class="main-title">ΜΕΡΑΡΧΙΑ ΥΠΟΣΤΗΡΙΞΗΣ ΒΑΣΗΣ</h1>
+    <div class="sub-title">Σελίδα Χρήστη</div>
   </header>
 
   <!-- Κύριο περιεχόμενο -->
-  <div id="products-container"></div>
-  <div id="message" style="color: green;"></div>
+  <main>
+    <div id="products-container"></div>
+    <div id="message" style="color: green;"></div>
 
-  <h2 style="text-align: center;">Τελευταίες 3 πωλήσεις</h2>
-  <div id="last-sales"></div>
+    <h2 style="text-align: center;">Τελευταίες 3 πωλήσεις</h2>
+    <div id="last-sales"></div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    &copy; ΜΕΡΥΒ/ΓΕΠ 2025
+  </footer>
 
   <script>
     // Φόρτωση λίστας προϊόντων (όνομα & τιμή)
@@ -73,7 +99,7 @@
       });
     }
 
-    // Κλήση API: πώληση
+    // Κλήση API: πώληση προϊόντος
     async function sellProduct(productId) {
       const res = await fetch("/api/sell", {
         method: "POST",
@@ -93,13 +119,14 @@
       }
     }
 
-    // Παίρνουμε τις 3 τελευταίες πωλήσεις
+    // Λήψη των 3 τελευταίων πωλήσεων
     async function fetchLastSales() {
       const res = await fetch("/api/last-sales");
       const data = await res.json();
       const div = document.getElementById("last-sales");
       div.innerHTML = "";
       for (let sale of data) {
+        // Βρίσκουμε το index της πώλησης στον global πίνακα (μέσω επιπλέον αιτήματος)
         const globalIndex = await findSaleIndex(sale);
         const p = document.createElement("p");
         p.textContent = `Προϊόν: ${sale.productName}, Τιμή: ${sale.price}€, Ακυρωμένο: ${sale.canceled}`;
@@ -111,14 +138,12 @@
       }
     }
 
-    // Αναζητάμε το index της πώλησης στον πίνακα sales
+    // Βρίσκουμε το index μιας πώλησης στον πίνακα πωλήσεων
     async function findSaleIndex(saleObj) {
       const res = await fetch("/api/admin/sales");
       const allSales = await res.json();
       const idx = allSales.findIndex(
-        s =>
-          s.productId === saleObj.productId &&
-          s.timestamp === saleObj.timestamp
+        s => s.productId === saleObj.productId && s.timestamp === saleObj.timestamp
       );
       return idx;
     }
@@ -144,10 +169,5 @@
     fetchProducts();
     fetchLastSales();
   </script>
-
-  <!-- Footer -->
-  <footer>
-    &copy; ΜΕΡΥΒ/ΓΕΠ 2025
-  </footer>
 </body>
 </html>
