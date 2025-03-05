@@ -34,7 +34,7 @@
     }
     header .sub-title {
       font-size: 20px;
-      color: #555; /* Σκούρο μεταλλικό */
+      color: #555;
       margin: 5px 0 0 0;
       padding: 0;
     }
@@ -48,35 +48,19 @@
     #products-container, #last-sales, #message {
       margin: 20px 0;
     }
+    /* Styling για το πεδίο ποσότητας */
+    #saleQuantity {
+      font-size: 18px;
+      width: 60px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
     /* Buttons styling */
     button {
       font-size: 18px;
       padding: 10px 20px;
       margin: 5px;
       cursor: pointer;
-    }
-    /* Στυλ για το κουμπί ακύρωσης: κόκκινο */
-    .cancel-button {
-      background-color: red;
-      color: #fff;
-      border: none;
-    }
-    /* Στυλ για το κουμπί τικ παρατηρήσεων */
-    .obs-button {
-      background-color: #4CAF50;
-      color: #fff;
-      border: none;
-      font-size: 16px;
-      padding: 5px 10px;
-      margin-left: 5px;
-      cursor: pointer;
-    }
-    /* Input για παρατηρήσεις */
-    .obs-input {
-      font-size: 16px;
-      padding: 5px;
-      width: 200px;
-      margin-left: 10px;
     }
     /* Footer styling */
     footer {
@@ -85,7 +69,9 @@
       padding: 10px;
       text-align: center;
       font-size: 16px;
-      /* Για να είναι "κόλλημένο" στο κάτω μέρος όταν δεν υπάρχει πολύ περιεχόμενο, χρησιμοποιούμε flexbox στο body (δείτε παραπάνω) */
+      position: fixed;
+      bottom: 0;
+      width: 100%;
     }
   </style>
 </head>
@@ -98,6 +84,12 @@
 
   <!-- Κύριο περιεχόμενο -->
   <main>
+    <!-- Πεδίο για την επιλογή ποσότητας -->
+    <div>
+      <label for="saleQuantity">Ποσότητα: </label>
+      <input type="number" id="saleQuantity" value="1" min="1">
+    </div>
+
     <div id="products-container"></div>
     <div id="message" style="color: green;"></div>
     <h2>Τελευταίες 3 πωλήσεις</h2>
@@ -124,12 +116,13 @@
       });
     }
 
-    // Κλήση API: πώληση προϊόντος
+    // Κλήση API: πώληση προϊόντος με καθορισμένη ποσότητα
     async function sellProduct(productId) {
+      const quantity = parseInt(document.getElementById("saleQuantity").value) || 1;
       const res = await fetch("/api/sell", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId })
+        body: JSON.stringify({ productId, quantity })
       });
       const data = await res.json();
       if (res.ok) {
@@ -144,7 +137,7 @@
       }
     }
 
-    // Λήψη των 3 τελευταίων πωλήσεων
+    // Λήψη των 3 τελευταίων πωλήσεων (χωρίς εμφάνιση "Ακυρωμένο")
     async function fetchLastSales() {
       const res = await fetch("/api/last-sales");
       const data = await res.json();
@@ -152,82 +145,18 @@
       div.innerHTML = "";
       for (let sale of data) {
         const globalIndex = await findSaleIndex(sale);
-        // Δημιουργούμε ένα container για κάθε πώληση
-        const saleContainer = document.createElement("div");
-        saleContainer.style.marginBottom = "15px";
-        
-        // Δημιουργούμε το κείμενο της πώλησης
         const p = document.createElement("p");
-        p.textContent = `Προϊόν: ${sale.productName}, Τιμή: ${sale.price}€, Ακυρωμένο: ${sale.canceled}`;
-        saleContainer.appendChild(p);
-        
-        // Δημιουργούμε το κουμπί ακύρωσης με κόκκινο χρώμα
-        const cancelBtn = document.createElement("button");
-        cancelBtn.innerText = "Ακύρωση";
-        cancelBtn.classList.add("cancel-button");
-        cancelBtn.onclick = () => cancelSale(globalIndex);
-        saleContainer.appendChild(cancelBtn);
-        
-        // Δημιουργούμε το input για παρατηρήσεις
-        const obsInput = document.createElement("input");
-        obsInput.type = "text";
-        obsInput.placeholder = "ΠΑΡΑΤΗΡΗΣΕΙΣ";
-        obsInput.classList.add("obs-input");
-        // Αν η πώληση έχει ήδη παρατηρήσεις, μπορούμε να τις εμφανίσουμε
-        if (sale.observation) {
-          obsInput.value = sale.observation;
-        }
-        saleContainer.appendChild(obsInput);
-        
-        // Δημιουργούμε ένα μικρό κουμπί (με τικ) για αποθήκευση/ενημέρωση των παρατηρήσεων
-        const obsBtn = document.createElement("button");
-        obsBtn.innerText = "✓";
-        obsBtn.classList.add("obs-button");
-        obsBtn.onclick = () => updateObservation(globalIndex, obsInput.value);
-        saleContainer.appendChild(obsBtn);
-        
-        div.appendChild(saleContainer);
+        p.textContent = `Προϊόν: ${sale.productName}, Τιμή: ${sale.price}€, Ποσότητα: ${sale.quantity}`;
+        // Δεν εμφανίζουμε το πεδίο canceled
+        div.appendChild(p);
       }
     }
 
-    // Βρίσκουμε το index μιας πώλησης
+    // Βρίσκουμε το index μιας πώλησης (μέσω αιτήματος στο /api/admin/sales)
     async function findSaleIndex(saleObj) {
       const res = await fetch("/api/admin/sales");
       const allSales = await res.json();
       return allSales.findIndex(s => s.productId === saleObj.productId && s.timestamp === saleObj.timestamp);
-    }
-
-    // Ακύρωση πώλησης
-    async function cancelSale(saleIndex) {
-      const res = await fetch("/api/cancel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ saleIndex })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.message);
-        fetchProducts();
-        fetchLastSales();
-      } else {
-        alert(data.message);
-      }
-    }
-
-    // Ενημέρωση παρατηρήσεων για μια πώληση
-    async function updateObservation(saleIndex, observationText) {
-      const res = await fetch("/api/observation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ saleIndex, observation: observationText })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert("Παρατηρήσεις αποθηκεύτηκαν με επιτυχία!");
-        fetchLastSales();
-      } else {
-        alert(data.message);
-      }
     }
 
     // Αρχική φόρτωση
