@@ -2,157 +2,121 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Σελίδα Πωλητή</title>
+  <title>Σελίδα Χρήστη</title>
   <style>
-    body {
-      font-family: Arial;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    header {
-      background-color: #90EE90;
-      padding: 20px;
-      color: silver;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
-    }
-    main {
-      flex: 1;
-    }
-    button {
-      margin: 5px;
-      padding: 10px;
-      font-size: 16px;
-    }
-    footer {
-      background-color: black;
-      color: white;
-      padding: 10px;
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-    }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    header { background-color: #90EE90; text-align: center; padding: 20px; }
+    header h1 { color: #444; }
+    main { padding: 20px; text-align: center; }
+    button { font-size: 18px; padding: 10px; margin: 5px; cursor: pointer; }
+    #quantity { font-size: 18px; padding: 5px; width: 60px; text-align: center; }
+    footer { background-color: #000; color: #fff; text-align: center; padding: 10px; position: fixed; bottom: 0; width: 100%; }
     .cancel-btn { background-color: red; color: white; }
-    .observe-btn { background-color: green; color: white; }
-    input[type="number"] {
-      width: 60px;
-      text-align: center;
-      font-size: 16px;
-    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>ΜΕΡΑΡΧΙΑ ΥΠΟΣΤΗΡΙΞΗΣ ΒΑΣΗΣ</h1>
-    <h2>Σελίδα Πωλητή</h2>
-  </header>
 
-  <main>
-    <div>
-      ΠΟΣΟΤΗΤΑ: <input type="number" id="quantity" value="1" min="1">
-    </div>
+<header>
+  <h1>Σελίδα Πωλητή</h1>
+</header>
 
-    <div id="products-container"></div>
-    <div id="message"></div>
+<main>
+  <input type="number" id="quantity" value="1" min="1" placeholder="ΠΟΣΟΤΗΤΑ">
+  <div id="products-container"></div>
+  <div id="message"></div>
 
-    <h3>Τελευταίες 3 πωλήσεις</h2>
-    <div id="last-sales"></div>
-  </main>
+  <h2>Τελευταίες 3 πωλήσεις</h2>
+  <div id="last-sales"></div>
+</main>
 
-  <footer>
-    &copy; ΜΕΡΥΒ/ΓΕΠ 2025
-  </footer>
+<footer>
+  &copy; ΜΕΡΥΒ/ΓΕΠ 2025
+</footer>
 
-  <script>
-    async function fetchProducts() {
-      const res = await fetch('/api/products');
-      const products = await res.json();
-      const container = document.getElementById('products-container');
-      container.innerHTML = '';
-      products.forEach(p => {
-        const btn = document.createElement('button');
-        btn.textContent = `${p.name} (${p.price}€)`;
-        btn.onclick = () => sellProduct(p.id);
-        container.appendChild(btn);
-      });
-    }
+<script>
+// Φόρτωση προϊόντων
+async function fetchProducts() {
+  const res = await fetch("/api/products");
+  const data = await res.json();
+  const container = document.getElementById("products-container");
+  container.innerHTML = "";
 
-    async function sellProduct(productId) {
-      const quantity = Number(document.getElementById('quantity').value);
-      const res = await fetch('/api/sell', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ productId, quantity })
-      });
-      const data = await res.json();
-      alert(data.message);
-      document.getElementById('quantity').value = 1;
-      fetchLastSales();
-    }
+  data.forEach(product => {
+    const btn = document.createElement("button");
+    btn.innerText = `${product.name} (${product.price}€)`;
+    btn.onclick = () => {
+      const quantity = document.getElementById("quantity").value || 1;
+      sellProduct(product.id, quantity.value);
+    };
+    container.appendChild(btn);
+  });
+});
 
-    async function fetchLastSales() {
-      const res = await fetch('/api/last-sales');
-      const lastSales = await res.json();
-      const div = document.getElementById('last-sales');
-      div.innerHTML = '';
+async function sellProduct(productId, quantity) {
+  const res = await fetch("/api/sell", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ productId, quantity })
+  });
+  const data = await res.json();
+  document.getElementById("message").innerText = data.message;
+  document.getElementById("quantity").value = 1;
+  fetchLastSales();
+}
 
-      lastSales.forEach((sale, index) => {
-        const p = document.createElement('p');
-        p.innerHTML = `${sale.productName} - ${sale.price}€ x ${sale.quantity}`;
+async function fetchLastSales() {
+  const res = await fetch("/api/last-sales");
+  const data = await res.json();
+  const div = document.getElementById("last-sales");
+  div.innerHTML = "";
 
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Ακύρωση';
-        cancelBtn.classList.add('cancel-btn');
-        cancelBtn.onclick = () => cancelSale(indexInSales(sale));
+  data.forEach((sale, index) => {
+    const p = document.createElement("p");
+    p.textContent = `Προϊόν: ${sale.productName}, Τιμή: ${sale.price}€, Ποσότητα: ${sale.quantity}`;
 
-        const obsInput = document.createElement('input');
-        obsInput.placeholder = 'ΠΑΡΑΤΗΡΗΣΕΙΣ';
+    const cancelBtn = document.createElement("button");
+    cancelBtn.innerText = "Ακύρωση";
+    cancelBtn.classList.add("cancel-btn");
+    cancelBtn.onclick = () => cancelSale(index);
+    p.appendChild(cancelBtn);
 
-        const obsBtn = document.createElement('button');
-        obsInput.type='text';
-        obsBtn.innerText = '✓';
-        obsBtn.classList.add('observe-btn');
-        obsBtn.onclick = () => addObservation(indexInSales(sale), obsInput.value);
+    const observationInput = document.createElement("input");
+    observationInput.placeholder = "ΠΑΡΑΤΗΡΗΣΕΙΣ";
+    observationInput.value = sale.observation;
+    p.appendChild(observationInput);
 
-        div.appendChild(document.createTextNode(`${sale.productName} - ${sale.price}€ `));
-        div.appendChild(cancelBtn);
-        div.appendChild(obsInput);
-        div.appendChild(obsBtn);
-        div.appendChild(document.createElement('br'));
-      });
-      document.getElementById('quantity').value = 1;
-    }
+    const saveBtn = document.createElement("button");
+    saveBtn.innerText = "✓";
+    saveBtn.onclick = () => saveObservation(index, observationInput.value);
+    p.appendChild(saveBtn);
 
-    async function indexInSales(saleObj){
-      const res = await fetch('/api/admin/sales');
-      const allSales = await res.json();
-      return allSales.findIndex(s => s.timestamp === saleObj.timestamp && s.productId === saleObj.productId);
-    }
+    div.appendChild(p);
+  });
+}
 
-    async function cancelSale(saleIndex){
-      const res = await fetch('/api/cancel', {
-        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({saleIndex})
-      });
-      const data = await res.json();
-      alert(data.message);
-      fetchProducts();
-      fetchLastSales();
-    }
+async function cancelSale(index) {
+  const res = await fetch("/api/cancel", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ saleIndex: index })
+  });
+  const data = await res.json();
+  alert(data.message);
+  fetchLastSales();
+}
 
-    async function addObservation(saleIndex, observation){
-      const res = await fetch('/api/observation', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({saleIndex,observation})
-      });
-      const data = await res.json();
-      alert(data.message);
-    }
+async function saveObservation(index, observation) {
+  const res = await fetch("/api/observation", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ saleIndex: index, observation })
+  });
+  const data = await res.json();
+  alert(data.message);
+}
 
-    fetchProducts();
-    fetchLastSales();
-  </script>
+fetchProducts();
+fetchLastSales();
+</script>
 </body>
 </html>
