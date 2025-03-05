@@ -13,23 +13,20 @@ let lastResetDate = new Date().getDate();
 let products = [
   { id: 1, name: "Espesso", price: 0.70, stock: 0 },
   { id: 2, name: "Cappuccino", price: 1.00, stock: 0 },
-  { id: 3, name: "Nescafe ", price: 0.50, stock: 0 },
-  { id: 4, name: "Ελληνικός Μονός ", price: 0.40, stock: 0 },
-  { id: 5, name: "Ελληνικός Διπλός ", price: 0.60, stock: 0 },
-  { id: 6, name: "Κουλούρι ", price: 0.50, stock: 0 },
-  { id: 7, name: "Σφολιατα ", price: 1.50, stock: 0 },
-  { id: 8, name: "Σφολιατα ", price: 1.40, stock: 0 },
-  { id: 9, name: "Σφολιατα ", price: 1.30, stock: 0 },
-  { id: 10, name: "Σφολιατα ", price: 1.20, stock: 0 },
-  { id: 11, name: "Σφολιατα ", price: 1.00, stock: 0 },
-  { id: 12, name: "Σφολιατα ", price: 7.99, stock: 0 },
+  { id: 3, name: "Nescafe", price: 0.50, stock: 0 },
+  { id: 4, name: "Ελληνικός Μονός", price: 0.40, stock: 0 },
+  { id: 5, name: "Ελληνικός Διπλός", price: 0.60, stock: 0 },
+  { id: 6, name: "Κουλούρι", price: 0.50, stock: 0 },
+  { id: 7, name: "Σφολιατα", price: 1.50, stock: 0 },
+  { id: 8, name: "Σφολιατα", price: 1.40, stock: 0 },
+  { id: 9, name: "Σφολιατα", price: 1.30, stock: 0 },
+  { id: 10, name: "Σφολιατα", price: 1.20, stock: 0 },
+  { id: 11, name: "Σφολιατα", price: 1.00, stock: 0 },
+  { id: 12, name: "Σφολιατα", price: 7.99, stock: 0 },
 ];
 
-// Πίνακας πωλήσεων
-let sales = [
-  observation: "",
-  observationTimestamp: ""
-];
+// Διορθώνουμε την αρχικοποίηση του πίνακα πωλήσεων
+let sales = [];
 
 /**
  * Κάθε αίτημα ελέγχει αν άλλαξε η ημερομηνία, και αν ναι, κάνει reset.
@@ -39,20 +36,20 @@ function checkDailyReset() {
   if (currentDay !== lastResetDate) {
     // Μηδενίζουμε πωλήσεις
     sales = [];
-    // Επαναφέρουμε την αρχική κατάσταση (αν θέλουμε να ορίσουμε συγκεκριμένα αποθέματα/τιμές)
+    // Επαναφέρουμε την αρχική κατάσταση (ορίζοντας και τα προϊόντα με stock 0)
     products = [
-    { id: 1, name: "Espesso", price: 0.70, stock: 0 },
-  { id: 2, name: "Cappuccino", price: 1.00, stock: 0 },
-  { id: 3, name: "Nescafe ", price: 0.50, stock: 0 },
-  { id: 4, name: "Ελληνικός Μονός ", price: 0.40, stock: 0 },
-  { id: 5, name: "Ελληνικός Διπλός ", price: 0.60, stock: 0 },
-  { id: 6, name: "Κουλούρι ", price: 0.50, stock: 0 },
-  { id: 7, name: "Σφολιατα ", price: 1.50, stock: 0 },
-  { id: 8, name: "Σφολιατα ", price: 1.40, stock: 0 },
-  { id: 9, name: "Σφολιατα ", price: 1.30, stock: 0 },
-  { id: 10, name: "Σφολιατα ", price: 1.20, stock: 0 },
-  { id: 11, name: "Σφολιατα ", price: 1.00, stock: 0 },
-  { id: 12, name: "Σφολιατα ", price: 7.99, stock: 0 },
+      { id: 1, name: "Espesso", price: 0.70, stock: 0 },
+      { id: 2, name: "Cappuccino", price: 1.00, stock: 0 },
+      { id: 3, name: "Nescafe", price: 0.50, stock: 0 },
+      { id: 4, name: "Ελληνικός Μονός", price: 0.40, stock: 0 },
+      { id: 5, name: "Ελληνικός Διπλός", price: 0.60, stock: 0 },
+      { id: 6, name: "Κουλούρι", price: 0.50, stock: 0 },
+      { id: 7, name: "Σφολιατα", price: 1.50, stock: 0 },
+      { id: 8, name: "Σφολιατα", price: 1.40, stock: 0 },
+      { id: 9, name: "Σφολιατα", price: 1.30, stock: 0 },
+      { id: 10, name: "Σφολιατα", price: 1.20, stock: 0 },
+      { id: 11, name: "Σφολιατα", price: 1.00, stock: 0 },
+      { id: 12, name: "Σφολιατα", price: 7.99, stock: 0 },
     ];
     lastResetDate = currentDay;
     console.log("Αυτόματος μηδενισμός ημέρας ολοκληρώθηκε!");
@@ -73,10 +70,9 @@ app.get("/user", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "user.html"));
 });
 
-/** Επιστροφή λίστας προϊόντων - ο χρήστης βλέπει ΜΟΝΟ name & price (ΟΧΙ stock) */
+/** Επιστροφή λίστας προϊόντων - ο χρήστης βλέπει ΜΟΝΟ name & price (χωρίς stock) */
 app.get("/api/products", (req, res) => {
   checkDailyReset();
-  // Στέλνουμε μόνο name, price, id (χωρίς το stock)
   const dataToSend = products.map(p => ({
     id: p.id,
     name: p.name,
@@ -85,7 +81,7 @@ app.get("/api/products", (req, res) => {
   res.json(dataToSend);
 });
 
-/** Ο χρήστης κάνει πώληση - το απόθεμα μειώνεται, επιτρέπεται να γίνει και αρνητικό. */
+/** Ο χρήστης κάνει πώληση - το απόθεμα μειώνεται (μπορεί να γίνει αρνητικό) */
 app.post("/api/sell", (req, res) => {
   checkDailyReset();
   const { productId } = req.body;
@@ -95,10 +91,10 @@ app.post("/api/sell", (req, res) => {
     return res.status(404).json({ message: "Το προϊόν δεν βρέθηκε" });
   }
 
-  // Αφαιρούμε 1 από το stock, ακόμη κι αν πάει σε αρνητικό.
+  // Μείωση του stock κατά 1
   product.stock -= 1;
 
-  // Καταχώρηση της πώλησης
+  // Καταχώρηση της πώλησης (προσθέτουμε επίσης πεδία για παρατηρήσεις)
   const sale = {
     productId: product.id,
     productName: product.name,
@@ -106,13 +102,15 @@ app.post("/api/sell", (req, res) => {
     quantity: 1,
     timestamp: new Date().toISOString(),
     canceled: false,
+    observation: "",            // Αρχικά κενό
+    observationTimestamp: ""    // Αρχικά κενό
   };
   sales.push(sale);
 
   return res.json({ message: `Πωλήθηκε το ${product.name}`, sale });
 });
 
-/** Τελευταίες 3 πωλήσεις (μη ακυρωμένες). */
+/** Τελευταίες 3 πωλήσεις (μη ακυρωμένες) */
 app.get("/api/last-sales", (req, res) => {
   checkDailyReset();
   const validSales = sales.filter(s => !s.canceled);
@@ -136,7 +134,7 @@ app.post("/api/cancel", (req, res) => {
 
   sale.canceled = true;
 
-  // Μπορείς, αν θες, να προσθέσεις πίσω στο stock (εδώ το κάνουμε)
+  // Επιστροφή στο απόθεμα
   const product = products.find(p => p.id === sale.productId);
   if (product) {
     product.stock += sale.quantity;
@@ -159,25 +157,23 @@ app.get("/api/admin/sales", (req, res) => {
   res.json(sales);
 });
 
-/** 2. Επιστροφή αποθέματος για να μπορεί να το βλέπει ο διαχειριστής */
+/** 2. Επιστροφή αποθέματος για το admin */
 app.get("/api/admin/inventory", (req, res) => {
   checkDailyReset();
-  // Επιστρέφουμε όλο το προϊόν, μαζί με stock
   res.json(products);
 });
 
 /** 3. Προσθήκη αποθέματος (ή αφαίρεση) σε ένα προϊόν */
 app.post("/api/admin/add-stock", (req, res) => {
   checkDailyReset();
-  const { productId, quantityChange } = req.body; // quantityChange μπορεί να είναι θετικό ή αρνητικό
+  const { productId, quantityChange } = req.body;
   const product = products.find(p => p.id === Number(productId));
 
   if (!product) {
     return res.status(404).json({ message: "Το προϊόν δεν βρέθηκε" });
   }
 
-  product.stock += Number(quantityChange); // επιτρέπουμε να πάει και σε αρνητικό
-
+  product.stock += Number(quantityChange);
   res.json({ message: `Ανανεώθηκε το απόθεμα του ${product.name} σε ${product.stock}`, product });
 });
 
@@ -199,34 +195,42 @@ app.get("/api/admin/daily-sales", (req, res) => {
     grouped[key].totalSold += sale.quantity;
     grouped[key].totalIncome += sale.quantity * sale.price;
   }
-  res.json(Object.values(grouped)); 
+  res.json(Object.values(grouped));
 });
 
-/** 5. Χειροκίνητος Μηδενισμός (εφόσον το θες εκτός από τον αυτόματο) */
+/** 5. Χειροκίνητος μηδενισμός */
 app.post("/api/admin/reset", (req, res) => {
   sales = [];
   products = [
-    { id: 1, name: "Προϊόν Α", price: 10.0, stock: 10 },
-    { id: 2, name: "Προϊόν Β", price: 15.5, stock: 5 },
-    { id: 3, name: "Προϊόν Γ", price: 7.99, stock: 20 },
+    { id: 1, name: "Espesso", price: 0.70, stock: 0 },
+    { id: 2, name: "Cappuccino", price: 1.00, stock: 0 },
+    { id: 3, name: "Nescafe", price: 0.50, stock: 0 },
+    { id: 4, name: "Ελληνικός Μονός", price: 0.40, stock: 0 },
+    { id: 5, name: "Ελληνικός Διπλός", price: 0.60, stock: 0 },
+    { id: 6, name: "Κουλούρι", price: 0.50, stock: 0 },
+    { id: 7, name: "Σφολιατα", price: 1.50, stock: 0 },
+    { id: 8, name: "Σφολιατα", price: 1.40, stock: 0 },
+    { id: 9, name: "Σφολιατα", price: 1.30, stock: 0 },
+    { id: 10, name: "Σφολιατα", price: 1.20, stock: 0 },
+    { id: 11, name: "Σφολιατα", price: 1.00, stock: 0 },
+    { id: 12, name: "Σφολιατα", price: 7.99, stock: 0 },
   ];
   lastResetDate = new Date().getDate();
   res.json({ message: "Ο μηδενισμός ολοκληρώθηκε επιτυχώς!" });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server τρέχει στο http://localhost:${PORT}`);
-});
-
-// Ενημέρωση παρατηρήσεων για μια πώληση
+/** 6. Ενημέρωση παρατηρήσεων για μια πώληση */
 app.post("/api/observation", (req, res) => {
   const { saleIndex, observation } = req.body;
   if (saleIndex < 0 || saleIndex >= sales.length) {
     return res.status(404).json({ message: "Μη έγκυρη πώληση" });
   }
-  // Ενημέρωση της πώλησης με παρατηρήσεις και τρέχουσα ημερομηνία/ώρα
   const sale = sales[saleIndex];
   sale.observation = observation;
   sale.observationTimestamp = new Date().toISOString();
   return res.json({ message: "Παρατηρήσεις αποθηκεύτηκαν", sale });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server τρέχει στο http://localhost:${PORT}`);
 });
