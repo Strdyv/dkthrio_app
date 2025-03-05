@@ -19,29 +19,19 @@ let products = [
   { id: 12, name: "Σφολιατα", price: 7.99, stock: 0 },
 ];
 
-// Αρχικοποίηση πίνακα πωλήσεων
 let sales = [];
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Σερβίρουμε τα στατικά αρχεία από το public
 app.use(express.static(path.join(__dirname, "public")));
 
-// ---------------------------------
 // ΡΟΥΤΕΣ ΓΙΑ ΤΟΝ ΧΡΗΣΤΗ
-// ---------------------------------
 app.get("/user", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "user.html"));
 });
 
 app.get("/api/products", (req, res) => {
-  const dataToSend = products.map(p => ({
-    id: p.id,
-    name: p.name,
-    price: p.price,
-  }));
-  res.json(dataToSend);
+  res.json(products.map(p => ({ id: p.id, name: p.name, price: p.price })));
 });
 
 app.post("/api/sell", (req, res) => {
@@ -49,9 +39,7 @@ app.post("/api/sell", (req, res) => {
   const qty = quantity ? Number(quantity) : 1;
   const product = products.find(p => p.id === Number(productId));
 
-  if (!product) {
-    return res.status(404).json({ message: "Το προϊόν δεν βρέθηκε" });
-  }
+  if (!product) return res.status(404).json({ message: "Το προϊόν δεν βρέθηκε" });
 
   product.stock -= qty;
 
@@ -65,41 +53,34 @@ app.post("/api/sell", (req, res) => {
     observation: "",
     observationTimestamp: ""
   };
+
   sales.push(sale);
 
   return res.json({ message: `Πωλήθηκαν ${qty} τεμάχια του ${product.name}`, sale });
 });
 
 app.get("/api/last-sales", (req, res) => {
-  const validSales = sales.filter(s => !s.canceled);
-  const last3 = validSales.slice(-3);
-  res.json(last3);
+  res.json(sales.filter(s => !s.canceled).slice(-3));
 });
 
 app.post("/api/cancel", (req, res) => {
   const { saleIndex } = req.body;
-  if (saleIndex < 0 || saleIndex >= sales.length) {
+
+  if (saleIndex < 0 || saleIndex >= sales.length)
     return res.status(404).json({ message: "Μη έγκυρη πώληση" });
-  }
 
   const sale = sales[saleIndex];
-  if (sale.canceled) {
+  if (sale.canceled)
     return res.status(400).json({ message: "Η πώληση είναι ήδη ακυρωμένη" });
-  }
 
   sale.canceled = true;
-
   const product = products.find(p => p.id === sale.productId);
-  if (product) {
-    product.stock += sale.quantity;
-  }
+  if (product) product.stock += sale.quantity;
 
   return res.json({ message: "Η πώληση ακυρώθηκε", sale });
 });
 
-// ---------------------------------
 // ΡΟΥΤΕΣ ΓΙΑ ΤΟΝ ΔΙΑΧΕΙΡΙΣΤΗ
-// ---------------------------------
 app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "admin.html"));
 });
@@ -116,29 +97,30 @@ app.post("/api/admin/add-stock", (req, res) => {
   const { productId, quantityChange } = req.body;
   const product = products.find(p => p.id === Number(productId));
 
-  if (!product) {
+  if (!product)
     return res.status(404).json({ message: "Το προϊόν δεν βρέθηκε" });
-  }
 
   product.stock += Number(quantityChange);
   res.json({ message: `Ανανεώθηκε το απόθεμα του ${product.name} σε ${product.stock}`, product });
 });
 
+app.get("/api/admin/sales", (req, res) => res.json(sales));
+
 app.post("/api/admin/reset", (req, res) => {
   sales = [];
-  products.forEach(p => p.stock = 0);
+  products.forEach(p => (p.stock = 0));
   res.json({ message: "Ο μηδενισμός ολοκληρώθηκε επιτυχώς!" });
 });
 
 app.post("/api/observation", (req, res) => {
   const { saleIndex, observation } = req.body;
-  if (saleIndex < 0 || saleIndex >= sales.length) {
+  if (saleIndex < 0 || saleIndex >= sales.length)
     return res.status(404).json({ message: "Μη έγκυρη πώληση" });
-  }
-  const sale = sales[saleIndex];
-  sale.observation = observation;
-  sale.observationTimestamp = new Date().toISOString();
-  return res.json({ message: "Παρατηρήσεις αποθηκεύτηκαν", sale });
+
+  sales[saleIndex].observation = observation;
+  sales[saleIndex].observationTimestamp = new Date().toISOString();
+
+  return res.json({ message: "Παρατηρήσεις αποθηκεύτηκαν" });
 });
 
 app.listen(PORT, () => {
