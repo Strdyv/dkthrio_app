@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Σελίδα Χρήστη</title>
+  <meta charset=\"utf-8\">
+  <title>ΚΥΛΙΚΕΙΟ ΜΕΡΥΒ</title>
   <style>
-    body {
+    html, body {
       font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      height: 100%;
       margin: 0;
       padding: 0;
+      display: flex;
+      flex-direction: column;
     }
     header {
       background-color: #90EE90;
@@ -28,6 +28,7 @@
       color: #fff;
       padding: 10px;
       text-align: center;
+      font-size: 16px;
       position: fixed;
       bottom: 0;
       width: 100%;
@@ -39,129 +40,119 @@
       margin: 5px;
     }
     .cancel-btn { background-color: red; color: white; }
-    .obs-btn {
-      background-color: green; color: white; padding: 5px; cursor: pointer;
-    }
-    .product-btn { margin: 10px; }
+    .obs-btn { background-color: #4CAF50; color: white; }
   </style>
-
 </head>
 <body>
-
 <header>
   <h1>ΜΕΡΑΡΧΙΑ ΥΠΟΣΤΗΡΙΞΗΣ ΒΑΣΗΣ</h1>
   <h3>Σελίδα Πωλητή</h3>
 </header>
 
 <main>
-  <input type="number" id="quantity" value="1" min="1" style="font-size:18px; padding:5px; width:80px; text-align:center;">
-  <div id="products-container"></div>
-  <div id="message" style="color: green;"></div>
+  <label for=\"quantity\">ΠΟΣΟΤΗΤΑ:</label>
+  <input type=\"number\" id=\"quantity\" value=\"1\" min=\"1\" style=\"font-size:18px;padding:5px;width:80px;\">
+  <div id=\"products-container\"></div>
+
   <h2>Τελευταίες 3 πωλήσεις</h2>
-  <div id="last-sales"></div>
+  <div id=\"last-sales\"></div>
 </main>
 
-<footer>
-  &copy; ΜΕΡΥΒ/ΓΕΠ 2025
-</footer>
+<footer>&copy; ΜΕΡΥΒ/ΓΕΠ 2025</footer>
 
 <script>
 async function fetchProducts() {
-  const res = await fetch("/api/products");
+  const res = await fetch(\"/api/products\");
   const data = await res.json();
-  const container = document.getElementById("products-container");
-  container.innerHTML = "";
+  const container = document.getElementById(\"products-container\");
+  container.innerHTML = \"\";
   data.forEach(product => {
-    const btn = document.createElement("button");
+    const btn = document.createElement(\"button\");
     btn.innerText = `${product.name} (Τιμή: ${product.price}€)`;
-    btn.className="product-btn";
     btn.onclick = () => sellProduct(product.id);
     container.appendChild(btn);
   });
-});
+}
 
 async function sellProduct(productId) {
-  const quantity = document.getElementById("quantity").value;
-  const res = await fetch("/api/sell", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const quantity = document.getElementById(\"quantity\").value || 1;
+  const res = await fetch(\"/api/sell\", {
+    method: \"POST\",
+    headers: { \"Content-Type\": \"application/json\" },
     body: JSON.stringify({ productId, quantity })
   });
+
   const data = await res.json();
   if (res.ok) {
-    document.getElementById("message").innerText = data.message;
-    setTimeout(() => document.getElementById("message").innerText = "", 1000);
+    alert(data.message);
+    document.getElementById(\"quantity\").value = 1;
     fetchLastSales();
-    document.getElementById("quantity").value = 1;
   } else {
     alert(data.message);
   }
 }
 
 async function fetchLastSales() {
-  const res = await fetch("/api/last-sales");
+  const res = await fetch(\"/api/last-sales\");
   const data = await res.json();
-  const div = document.getElementById("last-sales");
-  div.innerHTML = "";
+  const div = document.getElementById(\"last-sales\");
+  div.innerHTML = \"\";
 
-  data.forEach(async (sale, index) => {
-    const p = document.createElement("p");
-    p.textContent = `Προϊόν: ${sale.productName}, Ποσότητα: ${sale.quantity}, Τιμή: ${sale.price}€`;
+  data.forEach((sale, idx) => {
+    const p = document.createElement(\"p\");
+    p.innerHTML = `Προϊόν: ${sale.productName}, Τιμή: ${sale.price}€, Ποσότητα: ${sale.quantity}`;
 
-    const cancelBtn = document.createElement("button");
-    cancelBtn.innerText = "Ακύρωση";
-    cancelBtn.className = "product-btn";
-    cancelBtn.style.backgroundColor = "red";
-    cancelBtn.onclick = async () => {
-      await fetch("/api/cancel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ saleIndex: sales.indexOf(sale) })
-      });
-      fetchLastSales();
-    };
+    const cancelBtn = document.createElement(\"button\");
+    cancelBtn.className = \"cancel-btn\";
+    cancelBtn.innerText = \"Ακύρωση\";
+    cancelBtn.onclick = () => cancelSale(idx);
 
-    const obsInput = document.createElement("input");
-    obsInput.placeholder = "ΠΑΡΑΤΗΡΗΣΕΙΣ";
+    const obsInput = document.createElement(\"input\");
+    obsInput.placeholder = \"ΠΑΡΑΤΗΡΗΣΕΙΣ\";
 
-    const obsBtn = document.createElement("button");
-    obsInput.type = "text";
-    obsBtn = document.createElement("button");
-    obsBtn.innerText = "✓";
-    obsBtn = document.createElement("button");
-    obsBtn.className = "obs-btn";
-    obsBtn.innerText = "✓";
-    obsBtn.onclick = () => {
-      fetch("/api/observation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ saleIndex: sales.indexOf(sale), observation: obsInput.value })
-      });
-    };
+    const obsBtn = document.createElement(\"button\");
+    obsBtn.innerText = \"✓\";
+    obsBtn.onclick = () => sendObservation(idx, obsInput.value);
 
     p.appendChild(cancelBtn);
     p.appendChild(obsInput);
-    p.appendChild(obsBtn);
+    p.appendChild(obsInput);
+
+    const obsSendBtn = document.createElement(\"button\");
+    obsSendBtn.innerText = \"✓\";
+    obsSendBtn.onclick = () => sendObservation(idx, obsInput.value);
+
+    p.appendChild(obsSendBtn);
+
     div.appendChild(p);
   });
 }
 
-// Αρχική φόρτωση
-fetchLastSales();
-fetch("/api/products").then(res => res.json()).then(data => {
-  const container = document.getElementById("products-container");
-  data.forEach(p => {
-    const btn = document.createElement("button");
-    btn.innerText = `${p.name} (${p.price}€)`;
-    btn.className = "product-btn";
-    btn.onclick = () => sellProduct(p.id);
-    container.appendChild(btn);
+async function cancelSale(saleIndex) {
+  const res = await fetch(\"/api/cancel\", {
+    method: \"POST\",
+    headers: { \"Content-Type\": \"application/json\" },
+    body: JSON.stringify({ saleIndex })
   });
-});
+  const data = await res.json();
+  alert(data.message);
+  fetchLastSales();
+}
 
+async function sendObservation(saleIndex, observation) {
+  const res = await fetch(\"/api/observation\", {
+    method: \"POST\",
+    headers: { \"Content-Type\": \"application/json\" },
+    body: JSON.stringify({ saleIndex, observation })
+  });
+  const data = await res.json();
+  alert(data.message);
+}
+
+// Αρχική φόρτωση
+fetchProducts();
+fetchLastSales();
 </script>
-
-<footer>&copy; ΜΕΡΥΒ/ΓΕΠ 2025</footer>
 
 </body>
 </html>
