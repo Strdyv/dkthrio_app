@@ -4,19 +4,25 @@
   <meta charset="utf-8">
   <title>Σελίδα Χρήστη</title>
   <style>
-    /* Γενικές ρυθμίσεις */
-    body {
+    /* Ορισμός ύψους για html και body */
+    html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
       font-family: Arial, sans-serif;
+    }
+    /* Χρησιμοποίηση flexbox για το body */
+    body {
+      display: flex;
+      flex-direction: column;
     }
     /* Header styling */
     header {
       background-color: #90EE90; /* Ανοιχτό πράσινο */
       padding: 20px;
       text-align: center;
-      border-bottom: 2px solid #fff; /* Κενή γραμμή στο κάτω μέρος */
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      border-bottom: 2px solid #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     header .main-title {
       font-size: 32px;
@@ -32,14 +38,14 @@
       margin: 5px 0 0 0;
       padding: 0;
     }
-    /* Main content styling */
+    /* Main content styling: να καταλαμβάνει τον διαθέσιμο χώρο */
     main {
+      flex: 1;
       padding: 20px;
-      margin-bottom: 80px; /* Χώρος για το footer */
-    }
-    /* Κεντράρισμα περιεχομένου */
-    #products-container, #last-sales, #message {
       text-align: center;
+    }
+    /* Containers */
+    #products-container, #last-sales, #message {
       margin: 20px 0;
     }
     /* Buttons styling */
@@ -49,16 +55,13 @@
       margin: 5px;
       cursor: pointer;
     }
-    /* Footer styling (ίδιο με τη σελίδα του διαχειριστή) */
+    /* Footer styling: τώρα χωρίς fixed, γιατί το flex φροντίζει να είναι στο κάτω μέρος */
     footer {
       background-color: #000;
       color: #fff;
       padding: 10px;
       text-align: center;
       font-size: 16px;
-      position: fixed;
-      bottom: 0;
-      width: 100%;
     }
   </style>
 </head>
@@ -73,8 +76,7 @@
   <main>
     <div id="products-container"></div>
     <div id="message" style="color: green;"></div>
-
-    <h2 style="text-align: center;">Τελευταίες 3 πωλήσεις</h2>
+    <h2>Τελευταίες 3 πωλήσεις</h2>
     <div id="last-sales"></div>
   </main>
 
@@ -126,7 +128,6 @@
       const div = document.getElementById("last-sales");
       div.innerHTML = "";
       for (let sale of data) {
-        // Βρίσκουμε το index της πώλησης στον global πίνακα (μέσω επιπλέον αιτήματος)
         const globalIndex = await findSaleIndex(sale);
         const p = document.createElement("p");
         p.textContent = `Προϊόν: ${sale.productName}, Τιμή: ${sale.price}€, Ακυρωμένο: ${sale.canceled}`;
@@ -138,14 +139,11 @@
       }
     }
 
-    // Βρίσκουμε το index μιας πώλησης στον πίνακα πωλήσεων
+    // Βρίσκουμε το index μιας πώλησης
     async function findSaleIndex(saleObj) {
       const res = await fetch("/api/admin/sales");
       const allSales = await res.json();
-      const idx = allSales.findIndex(
-        s => s.productId === saleObj.productId && s.timestamp === saleObj.timestamp
-      );
-      return idx;
+      return allSales.findIndex(s => s.productId === saleObj.productId && s.timestamp === saleObj.timestamp);
     }
 
     // Ακύρωση πώλησης
