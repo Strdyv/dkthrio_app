@@ -3,35 +3,114 @@
 <head>
   <meta charset="utf-8">
   <title>Σελίδα Διαχειριστή</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    /* Header styling */
+    header {
+      background-color: #90EE90; /* Ανοιχτό πράσινο */
+      padding: 20px;
+      text-align: center;
+      border-bottom: 2px solid #fff; /* "Κενή γραμμή" στο κάτω μέρος */
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    header .main-title {
+      font-size: 32px;
+      font-weight: bold;
+      color: #C0C0C0; /* Ασημένιο μεταλλικό */
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      margin: 0;
+      padding: 0;
+    }
+    header .sub-title {
+      font-size: 20px;
+      color: #555; /* Σκούρο μεταλλικό */
+      margin: 5px 0 0 0;
+      padding: 0;
+    }
+    /* Main content styling */
+    main {
+      padding: 20px;
+      margin-bottom: 80px; /* Χώρος για το footer */
+    }
+    /* Footer styling */
+    footer {
+      background-color: #000;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+      font-size: 16px;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+    /* Buttons styling */
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    /* Inputs styling */
+    input {
+      font-size: 16px;
+      padding: 8px;
+      margin: 5px;
+    }
+    .container {
+      text-align: center;
+      margin: 20px 0;
+    }
+    hr {
+      margin: 20px 0;
+      border: none;
+      border-top: 1px solid #ccc;
+    }
+  </style>
 </head>
 <body>
-  <h1>Σελίδα Διαχειριστή</h1>
+  <!-- Header -->
+  <header>
+    <h1 class="main-title">ΜΕΡΑΡΧΙΑ ΥΠΟΣΤΗΡΙΞΗΣ ΒΑΣΗΣ</h1>
+    <div class="sub-title">Σελίδα Διαχειριστή</div>
+  </header>
 
-  <div>
-    <button onclick="fetchSales()">Αναλυτικές Πωλήσεις</button>
-    <button onclick="fetchInventory()">Δες Απόθεμα</button>
-    <button onclick="fetchDailySales()">Σύνολο Πωλήσεων (σήμερα)</button>
-    <button onclick="resetDay()">Χειροκίνητος Μηδενισμός</button>
-  </div>
-  
-  <hr>
+  <!-- Κύριο περιεχόμενο -->
+  <main>
+    <div class="container">
+      <button onclick="fetchSales()">Αναλυτικές Πωλήσεις</button>
+      <button onclick="fetchInventory()">Δες Απόθεμα</button>
+      <button onclick="fetchDailySales()">Σύνολο Πωλήσεων (σήμερα)</button>
+      <button onclick="resetDay()">Χειροκίνητος Μηδενισμός</button>
+    </div>
+    
+    <hr>
+    
+    <!-- Προσθήκη αποθέματος σε προϊόν -->
+    <div class="container">
+      <h3>Προσθήκη/Αφαίρεση Αποθέματος</h3>
+      <p>Δώσε το ID του προϊόντος και το ποσό που θες να προσθέσεις (ή να αφαιρέσεις).</p>
+      <input type="number" id="stockProductId" placeholder="productId">
+      <input type="number" id="stockChange" placeholder="π.χ. 5 ή -3">
+      <button onclick="updateStock()">Ενημέρωση Αποθέματος</button>
+    </div>
+    
+    <hr>
+    
+    <div id="sales-container" class="container"></div>
+    <hr>
+    <div id="inventory-container" class="container"></div>
+    <hr>
+    <div id="daily-sales-container" class="container"></div>
+  </main>
 
-  <!-- Προσθήκη αποθέματος σε κάποιο προϊόν -->
-  <div>
-    <h3>Προσθήκη/Αφαίρεση Αποθέματος</h3>
-    <p>Δώσε το ID του προϊόντος και το ποσό που θες να προσθέσεις (ή να αφαιρέσεις).</p>
-    <input type="number" id="stockProductId" placeholder="productId">
-    <input type="number" id="stockChange" placeholder="π.χ. 5 ή -3">
-    <button onclick="updateStock()">Ενημέρωση Αποθέματος</button>
-  </div>
-
-  <hr>
-
-  <div id="sales-container"></div>
-  <hr>
-  <div id="inventory-container"></div>
-  <hr>
-  <div id="daily-sales-container"></div>
+  <!-- Footer -->
+  <footer>
+    &copy; ΜΕΡΥΒ/ΓΕΠ 2025
+  </footer>
 
   <script>
     // 1. Αναλυτικές πωλήσεις
@@ -59,19 +138,18 @@
       });
       div.innerHTML += `<h4>Συνολική Ποσότητα Πωληθέντων: ${totalCount}</h4>`;
     }
-
+    
     // 2. Προβολή αποθέματος
     async function fetchInventory() {
       const res = await fetch("/api/admin/inventory");
       const data = await res.json();
       const div = document.getElementById("inventory-container");
       div.innerHTML = "<h2>Τρέχον Απόθεμα</h2>";
-
       data.forEach(product => {
         div.innerHTML += `<p>ID: ${product.id} - ${product.name}, Stock: ${product.stock}, Τιμή: ${product.price}€</p>`;
       });
     }
-
+    
     // 3. Ενημέρωση (προσθήκη/αφαίρεση) αποθέματος
     async function updateStock() {
       const productId = document.getElementById("stockProductId").value;
@@ -80,7 +158,6 @@
         alert("Συμπλήρωσε ID προϊόντος και ποσό αποθέματος (π.χ. 5 ή -3)");
         return;
       }
-
       const res = await fetch("/api/admin/add-stock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,17 +165,15 @@
       });
       const data = await res.json();
       alert(data.message);
-      // Μετά την ενημέρωση, ανανέωσε την προβολή αποθέματος
       fetchInventory();
     }
-
+    
     // 4. Σύνολο πωλήσεων ανά προϊόν για σήμερα
     async function fetchDailySales() {
       const res = await fetch("/api/admin/daily-sales");
       const data = await res.json();
       const div = document.getElementById("daily-sales-container");
       div.innerHTML = "<h2>Σύνολο Πωλήσεων (σήμερα)</h2>";
-
       data.forEach(item => {
         div.innerHTML += `
           <p>
@@ -109,7 +184,7 @@
         `;
       });
     }
-
+    
     // 5. Χειροκίνητος μηδενισμός (προαιρετικά)
     async function resetDay() {
       const res = await fetch("/api/admin/reset", {
