@@ -45,24 +45,25 @@ app.get("/api/products", (req, res) => {
   res.json(dataToSend);
 });
 
-/** Ο χρήστης κάνει πώληση - το απόθεμα μειώνεται (μπορεί να γίνει αρνητικό) */
+/** Ο χρήστης κάνει πώληση - δέχεται το productId και την επιθυμητή ποσότητα */
 app.post("/api/sell", (req, res) => {
-  const { productId } = req.body;
+  const { productId, quantity } = req.body;
+  const qty = quantity ? Number(quantity) : 1; // default στο 1 αν δεν παρέχεται
   const product = products.find(p => p.id === Number(productId));
 
   if (!product) {
     return res.status(404).json({ message: "Το προϊόν δεν βρέθηκε" });
   }
 
-  // Μείωση του stock κατά 1
-  product.stock -= 1;
+  // Μείωση του stock κατά την καθορισμένη ποσότητα
+  product.stock -= qty;
 
-  // Καταχώρηση της πώλησης (προσθέτουμε πεδία για παρατηρήσεις)
+  // Καταχώρηση της πώλησης με την αντίστοιχη ποσότητα
   const sale = {
     productId: product.id,
     productName: product.name,
     price: product.price,
-    quantity: 1,
+    quantity: qty,
     timestamp: new Date().toISOString(),
     canceled: false,
     observation: "",            // Αρχικά κενό
@@ -70,7 +71,7 @@ app.post("/api/sell", (req, res) => {
   };
   sales.push(sale);
 
-  return res.json({ message: `Πωλήθηκε το ${product.name}`, sale });
+  return res.json({ message: `Πωλήθηκαν ${qty} τεμάχια του ${product.name}`, sale });
 });
 
 /** Τελευταίες 3 πωλήσεις (μη ακυρωμένες) */
