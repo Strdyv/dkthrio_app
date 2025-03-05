@@ -8,13 +8,14 @@
       margin: 0;
       padding: 0;
       font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
     }
     /* Header styling */
     header {
-      background-color:  #555; /* Σκούρο μεταλλικό */
+      background-color: #555; /* Σκούρο μεταλλικό */
       padding: 20px;
       text-align: center;
-      border-bottom: 2px solid #fff; /* "Κενή γραμμή" στο κάτω μέρος */
+      border-bottom: 2px solid #fff;
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     header .main-title {
@@ -69,6 +70,28 @@
       border: none;
       border-top: 1px solid #ccc;
     }
+    /* Grid styling για τα προϊόντα στο απόθεμα */
+    #inventory-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    /* Στυλ για κάθε προϊόν στο απόθεμα */
+    .product-item {
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    /* Στυλ για τις παρατηρήσεις στις πωλήσεις */
+    .observation {
+      font-style: italic;
+      color: #555;
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
@@ -89,21 +112,17 @@
     
     <hr>
     
-    <!-- Προσθήκη αποθέματος σε προϊόν -->
-    <div class="container">
-      <h3>Προσθήκη/Αφαίρεση Αποθέματος</h3>
-      <p>Δώσε το ID του προϊόντος και το ποσό που θες να προσθέσεις (ή να αφαιρέσεις).</p>
-      <input type="number" id="stockProductId" placeholder="productId">
-      <input type="number" id="stockChange" placeholder="π.χ. 5 ή -3">
-      <button onclick="updateStock()">Ενημέρωση Αποθέματος</button>
-    </div>
-    
-    <hr>
-    
-    <div id="sales-container" class="container"></div>
-    <hr>
+    <!-- Ενότητα για το απόθεμα, εμφανίζεται με grid -->
     <div id="inventory-container" class="container"></div>
+    
     <hr>
+    
+    <!-- Ενότητα για Αναλυτικές Πωλήσεις -->
+    <div id="sales-container" class="container"></div>
+    
+    <hr>
+    
+    <!-- Ενότητα για Σύνολο Πωλήσεων -->
     <div id="daily-sales-container" class="container"></div>
   </main>
 
@@ -119,13 +138,10 @@
       const data = await res.json();
       const div = document.getElementById("sales-container");
       div.innerHTML = "<h2>Αναλυτικές Πωλήσεις</h2>";
-
       let totalCount = 0;
       data.forEach((sale, index) => {
-        if (!sale.canceled) {
-          totalCount += sale.quantity;
-        }
-        div.innerHTML += `
+        if (!sale.canceled) totalCount += sale.quantity;
+        let saleHTML = `
           <p>
             <b>Index:</b> ${index} |
             <b>Προϊόν:</b> ${sale.productName} |
@@ -133,21 +149,31 @@
             <b>Ποσότητα:</b> ${sale.quantity} |
             <b>Ώρα:</b> ${sale.timestamp} |
             <b>Ακυρωμένο:</b> ${sale.canceled}
-          </p>
-        `;
+          </p>`;
+        if (sale.observation && sale.observation.trim() !== "") {
+          saleHTML += `<p class="observation"><b>Παρατηρήσεις:</b> ${sale.observation}<br>
+                        <small>${sale.observationTimestamp}</small></p>`;
+        }
+        div.innerHTML += saleHTML;
       });
       div.innerHTML += `<h4>Συνολική Ποσότητα Πωληθέντων: ${totalCount}</h4>`;
     }
     
-    // 2. Προβολή αποθέματος
+    // 2. Προβολή αποθέματος (εμφάνιση προϊόντων σε grid)
     async function fetchInventory() {
       const res = await fetch("/api/admin/inventory");
       const data = await res.json();
       const div = document.getElementById("inventory-container");
-      div.innerHTML = "<h2>Τρέχον Απόθεμα</h2>";
+      let html = "<h2>Τρέχον Απόθεμα</h2>";
       data.forEach(product => {
-        div.innerHTML += `<p>ID: ${product.id} - ${product.name}, Stock: ${product.stock}, Τιμή: ${product.price}€</p>`;
+        html += `<div class="product-item">
+                   <p><b>ID:</b> ${product.id}</p>
+                   <p><b>${product.name}</b></p>
+                   <p><b>Stock:</b> ${product.stock}</p>
+                   <p><b>Τιμή:</b> ${product.price}€</p>
+                 </div>`;
       });
+      div.innerHTML = html;
     }
     
     // 3. Ενημέρωση (προσθήκη/αφαίρεση) αποθέματος
@@ -173,23 +199,20 @@
       const res = await fetch("/api/admin/daily-sales");
       const data = await res.json();
       const div = document.getElementById("daily-sales-container");
-      div.innerHTML = "<h2>Σύνολο Πωλήσεων (σήμερα)</h2>";
+      let html = "<h2>Σύνολο Πωλήσεων (σήμερα)</h2>";
       data.forEach(item => {
-        div.innerHTML += `
-          <p>
-            <b>${item.productName}</b> | 
-            Ποσότητα: ${item.totalSold} | 
-            Έσοδα: ${item.totalIncome.toFixed(2)}€
-          </p>
-        `;
+        html += `<p>
+                   <b>${item.productName}</b> | 
+                   Ποσότητα: ${item.totalSold} | 
+                   Έσοδα: ${item.totalIncome.toFixed(2)}€
+                 </p>`;
       });
+      div.innerHTML = html;
     }
     
-    // 5. Χειροκίνητος μηδενισμός (προαιρετικά)
+    // 5. Χειροκίνητος μηδενισμός
     async function resetDay() {
-      const res = await fetch("/api/admin/reset", {
-        method: "POST"
-      });
+      const res = await fetch("/api/admin/reset", { method: "POST" });
       const data = await res.json();
       alert(data.message);
       fetchSales();
