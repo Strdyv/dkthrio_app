@@ -3,13 +3,58 @@
 <head>
   <meta charset="utf-8">
   <title>Σελίδα Χρήστη</title>
+  <style>
+    /* Header styling */
+    header {
+      background-color: #90ee90; /* Ανοιχτό πράσινο */
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    /* Footer styling */
+    footer {
+      background-color: #000;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+      font-size: 16px;
+    }
+    /* Μεγαλύτερα κουμπιά */
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    /* Επιπλέον στυλ για το κύριο περιεχόμενο */
+    #products-container {
+      margin: 20px;
+      text-align: center;
+    }
+    #last-sales {
+      margin: 20px;
+      text-align: center;
+    }
+    /* Μήνυμα */
+    #message {
+      text-align: center;
+      margin: 10px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-  <h1>Σελίδα Χρήστη</h1>
+  <!-- Header -->
+  <header>
+    ΜΕΡΑΡΧΙΑ ΥΠΟΣΤΗΡΙΞΗΣ ΒΑΣΗΣ
+  </header>
+
+  <!-- Κύριο περιεχόμενο -->
   <div id="products-container"></div>
   <div id="message" style="color: green;"></div>
 
-  <h2>Τελευταίες 3 πωλήσεις</h2>
+  <h2 style="text-align: center;">Τελευταίες 3 πωλήσεις</h2>
   <div id="last-sales"></div>
 
   <script>
@@ -19,9 +64,7 @@
       const data = await res.json();
       const container = document.getElementById("products-container");
       container.innerHTML = "";
-
       data.forEach(product => {
-        // Ο χρήστης βλέπει όνομα και τιμή
         const btn = document.createElement("button");
         btn.innerText = `${product.name} (Τιμή: ${product.price}€)`;
         btn.onclick = () => sellProduct(product.id);
@@ -38,15 +81,11 @@
         body: JSON.stringify({ productId })
       });
       const data = await res.json();
-
       if (res.ok) {
-        // Εμφανίζουμε το μήνυμα για 1 δευτερόλεπτο
         document.getElementById("message").innerText = data.message;
         setTimeout(() => {
           document.getElementById("message").innerText = "";
         }, 1000);
-
-        // Ενημερώνουμε την οθόνη
         fetchProducts();
         fetchLastSales();
       } else {
@@ -60,18 +99,13 @@
       const data = await res.json();
       const div = document.getElementById("last-sales");
       div.innerHTML = "";
-
       for (let sale of data) {
-        // Χρειαζόμαστε το index στον global πίνακα sales -> findSaleIndex
         const globalIndex = await findSaleIndex(sale);
-
         const p = document.createElement("p");
         p.textContent = `Προϊόν: ${sale.productName}, Τιμή: ${sale.price}€, Ακυρωμένο: ${sale.canceled}`;
-
         const cancelBtn = document.createElement("button");
         cancelBtn.innerText = "Ακύρωση";
         cancelBtn.onclick = () => cancelSale(globalIndex);
-
         p.appendChild(cancelBtn);
         div.appendChild(p);
       }
@@ -97,7 +131,6 @@
         body: JSON.stringify({ saleIndex })
       });
       const data = await res.json();
-
       if (res.ok) {
         alert(data.message);
         fetchProducts();
@@ -111,5 +144,10 @@
     fetchProducts();
     fetchLastSales();
   </script>
+
+  <!-- Footer -->
+  <footer>
+    &copy; ΜΕΡΥΒ/ΓΕΠ 2025
+  </footer>
 </body>
 </html>
