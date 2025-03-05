@@ -44,16 +44,8 @@
       padding: 20px;
       text-align: center;
     }
-    /* Container για τα προϊόντα: χρήση CSS Grid, 3 στήλες */
-    #products-container {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr); /* 3 στήλες */
-      gap: 20px; /* απόσταση ανάμεσα στα στοιχεία */
-      justify-items: center; /* κεντράρισμα των κουμπιών */
-      max-width: 1200px;
-      margin: 0 auto; /* κεντράρει όλο το grid */
-    }
-    #last-sales, #message {
+    /* Containers */
+    #products-container, #last-sales, #message {
       margin: 20px 0;
     }
     /* Buttons styling */
@@ -63,13 +55,37 @@
       margin: 5px;
       cursor: pointer;
     }
-    /* Footer styling: χωρίς fixed, γιατί το flex φροντίζει να είναι στο κάτω μέρος */
+    /* Στυλ για το κουμπί ακύρωσης: κόκκινο */
+    .cancel-button {
+      background-color: red;
+      color: #fff;
+      border: none;
+    }
+    /* Στυλ για το κουμπί τικ παρατηρήσεων */
+    .obs-button {
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      font-size: 16px;
+      padding: 5px 10px;
+      margin-left: 5px;
+      cursor: pointer;
+    }
+    /* Input για παρατηρήσεις */
+    .obs-input {
+      font-size: 16px;
+      padding: 5px;
+      width: 200px;
+      margin-left: 10px;
+    }
+    /* Footer styling */
     footer {
       background-color: #000;
       color: #fff;
       padding: 10px;
       text-align: center;
       font-size: 16px;
+      /* Για να είναι "κόλλημένο" στο κάτω μέρος όταν δεν υπάρχει πολύ περιεχόμενο, χρησιμοποιούμε flexbox στο body (δείτε παραπάνω) */
     }
   </style>
 </head>
@@ -105,7 +121,6 @@
         btn.innerText = `${product.name} (Τιμή: ${product.price}€)`;
         btn.onclick = () => sellProduct(product.id);
         container.appendChild(btn);
-        // Αφαιρούμε το document.createElement("br") για να μην πηγαίνουν σε νέα γραμμή
       });
     }
 
@@ -137,13 +152,41 @@
       div.innerHTML = "";
       for (let sale of data) {
         const globalIndex = await findSaleIndex(sale);
+        // Δημιουργούμε ένα container για κάθε πώληση
+        const saleContainer = document.createElement("div");
+        saleContainer.style.marginBottom = "15px";
+        
+        // Δημιουργούμε το κείμενο της πώλησης
         const p = document.createElement("p");
         p.textContent = `Προϊόν: ${sale.productName}, Τιμή: ${sale.price}€, Ακυρωμένο: ${sale.canceled}`;
+        saleContainer.appendChild(p);
+        
+        // Δημιουργούμε το κουμπί ακύρωσης με κόκκινο χρώμα
         const cancelBtn = document.createElement("button");
         cancelBtn.innerText = "Ακύρωση";
+        cancelBtn.classList.add("cancel-button");
         cancelBtn.onclick = () => cancelSale(globalIndex);
-        p.appendChild(cancelBtn);
-        div.appendChild(p);
+        saleContainer.appendChild(cancelBtn);
+        
+        // Δημιουργούμε το input για παρατηρήσεις
+        const obsInput = document.createElement("input");
+        obsInput.type = "text";
+        obsInput.placeholder = "ΠΑΡΑΤΗΡΗΣΕΙΣ";
+        obsInput.classList.add("obs-input");
+        // Αν η πώληση έχει ήδη παρατηρήσεις, μπορούμε να τις εμφανίσουμε
+        if (sale.observation) {
+          obsInput.value = sale.observation;
+        }
+        saleContainer.appendChild(obsInput);
+        
+        // Δημιουργούμε ένα μικρό κουμπί (με τικ) για αποθήκευση/ενημέρωση των παρατηρήσεων
+        const obsBtn = document.createElement("button");
+        obsBtn.innerText = "✓";
+        obsBtn.classList.add("obs-button");
+        obsBtn.onclick = () => updateObservation(globalIndex, obsInput.value);
+        saleContainer.appendChild(obsBtn);
+        
+        div.appendChild(saleContainer);
       }
     }
 
@@ -165,6 +208,22 @@
       if (res.ok) {
         alert(data.message);
         fetchProducts();
+        fetchLastSales();
+      } else {
+        alert(data.message);
+      }
+    }
+
+    // Ενημέρωση παρατηρήσεων για μια πώληση
+    async function updateObservation(saleIndex, observationText) {
+      const res = await fetch("/api/observation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ saleIndex, observation: observationText })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Παρατηρήσεις αποθηκεύτηκαν με επιτυχία!");
         fetchLastSales();
       } else {
         alert(data.message);
