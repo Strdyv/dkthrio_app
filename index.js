@@ -11,9 +11,18 @@ let lastResetDate = new Date().getDate();
 
 // Πίνακας προϊόντων με ΤΙΜΗ και ΑΠΟΘΕΜΑ
 let products = [
-  { id: 1, name: "Προϊόν Α", price: 10.0, stock: 10 },
-  { id: 2, name: "Προϊόν Β", price: 15.5, stock: 5 },
-  { id: 3, name: "Προϊόν Γ", price: 7.99, stock: 20 },
+  { id: 1, name: "Espesso", price: 0.70, stock: 0 },
+  { id: 2, name: "Cappuccino", price: 1.00, stock: 0 },
+  { id: 3, name: "Nescafe ", price: 0.50, stock: 0 },
+  { id: 4, name: "Ελληνικός Μονός ", price: 0.40, stock: 0 },
+  { id: 5, name: "Ελληνικός Διπλός ", price: 0.60, stock: 0 },
+  { id: 6, name: "Κουλούρι ", price: 0.50, stock: 0 },
+  { id: 7, name: "Σφολιατα ", price: 1.50, stock: 0 },
+  { id: 8, name: "Σφολιατα ", price: 1.40, stock: 0 },
+  { id: 9, name: "Σφολιατα ", price: 1.30, stock: 0 },
+  { id: 10, name: "Σφολιατα ", price: 1.20, stock: 0 },
+  { id: 11, name: "Σφολιατα ", price: 1.00, stock: 0 },
+  { id: 12, name: "Σφολιατα ", price: 7.99, stock: 0 },
 ];
 
 // Πίνακας πωλήσεων
@@ -29,9 +38,18 @@ function checkDailyReset() {
     sales = [];
     // Επαναφέρουμε την αρχική κατάσταση (αν θέλουμε να ορίσουμε συγκεκριμένα αποθέματα/τιμές)
     products = [
-      { id: 1, name: "Προϊόν Α", price: 10.0, stock: 10 },
-      { id: 2, name: "Προϊόν Β", price: 15.5, stock: 5 },
-      { id: 3, name: "Προϊόν Γ", price: 7.99, stock: 20 },
+    { id: 1, name: "Espesso", price: 0.70, stock: 0 },
+  { id: 2, name: "Cappuccino", price: 1.00, stock: 0 },
+  { id: 3, name: "Nescafe ", price: 0.50, stock: 0 },
+  { id: 4, name: "Ελληνικός Μονός ", price: 0.40, stock: 0 },
+  { id: 5, name: "Ελληνικός Διπλός ", price: 0.60, stock: 0 },
+  { id: 6, name: "Κουλούρι ", price: 0.50, stock: 0 },
+  { id: 7, name: "Σφολιατα ", price: 1.50, stock: 0 },
+  { id: 8, name: "Σφολιατα ", price: 1.40, stock: 0 },
+  { id: 9, name: "Σφολιατα ", price: 1.30, stock: 0 },
+  { id: 10, name: "Σφολιατα ", price: 1.20, stock: 0 },
+  { id: 11, name: "Σφολιατα ", price: 1.00, stock: 0 },
+  { id: 12, name: "Σφολιατα ", price: 7.99, stock: 0 },
     ];
     lastResetDate = currentDay;
     console.log("Αυτόματος μηδενισμός ημέρας ολοκληρώθηκε!");
