@@ -1,3 +1,4 @@
+"start": "node index.js"
 {
   "name": "dkthrio_app",
   "version": "1.0.0",
